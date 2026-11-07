@@ -215,6 +215,9 @@ h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin
 .field.missing input{border-color:var(--accent);animation:shake .35s}
 .field-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.field label{display:flex;align-items:center;flex-wrap:wrap;gap:0 6px}
+.field label .badge{margin-left:0;white-space:nowrap}
 .out{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;margin:0;font-family:var(--font);user-select:text;-webkit-user-select:text}
 .out-card{display:flex;flex-direction:column;gap:8px}
 .out-card .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -641,7 +644,7 @@ function endFields(d,prefix){
  const miss=ui.missing||[];
  return `<div class="field ${miss.includes('crowd')?'missing':''}"><label>5. フロア全体の集客状況<span class="badge req">必須</span></label>
    <div class="seg">${CROWD.map(c=>`<button data-act="crowd" data-v="${c}" aria-pressed="${d.crowd===c}">${c}</button>`).join('')}</div></div>
-  <div class="two">
+  <div class="stack">
    <div class="field ${miss.includes('wrap')?'missing':''}"><label for="${prefix}wrap">66. ギフトラッピング残数<span class="badge req">必須</span></label><input id="${prefix}wrap" type="number" inputmode="numeric" min="0" data-bind="wrap" value="${esc(d.wrap)}" placeholder="枚"></div>
    <div class="field ${miss.includes('flyerLeft')?'missing':''}"><label for="${prefix}flyerLeft">68. 店舗チラシ残数<span class="badge req">必須</span></label><input id="${prefix}flyerLeft" type="number" inputmode="numeric" min="0" data-bind="flyerLeft" value="${esc(d.flyerLeft)}" placeholder="枚"></div>
   </div><span class="muted small">チラシ残数が30枚前後になったら、その他報告に書いてください（補填されます）。</span>`;
