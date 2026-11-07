@@ -89,6 +89,19 @@ main .wrap{display:flex;flex-direction:column;gap:14px;padding-block:14px}
 .dr-item:active{background:var(--surface-2)}
 .dr-item[aria-current="page"]{background:var(--accent-soft)}
 .dr-item[aria-current="page"] b{color:var(--accent)}
+.who,.dr-user{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:12px;padding:10px 12px}
+.dr-user{margin-bottom:8px}
+.avatar{flex:none;width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;font-size:17px;animation:pop .45s var(--spring)}
+.who-n{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.35}
+.who-n small{font-size:11px;color:var(--muted)}
+.who-n b{font-size:16px;overflow-wrap:anywhere}
+.welcome{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:28px 4px 8px}
+.welcome .mark.big{width:150px;height:46px;background:var(--brand);-webkit-mask:url(logo-mask.png) center/contain no-repeat;mask:url(logo-mask.png) center/contain no-repeat}
+.welcome h1{margin:0;font-size:22px}
+.welcome p{margin:0;font-size:14px}
+.welcome .field{text-align:left}
+.dr-item.locked b,.dr-item.locked small{color:var(--muted);opacity:.55}
+.dr-item.locked b::after{content:"業務開始後";margin-left:8px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--surface-2);color:var(--muted);vertical-align:2px}
 .dr-sep{height:1px;background:var(--line);margin:8px 4px}
 .brand small b{font-weight:500;color:var(--accent)}
 
@@ -164,6 +177,16 @@ h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin
 .btn.block{width:100%}
 .linkbtn{border:0;background:none;color:var(--accent);font-size:12px;padding:0;text-decoration:underline;text-underline-offset:2px}
 
+.today{position:relative;overflow:hidden;background:var(--accent);color:#fff;border-radius:16px;padding:16px 18px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 30%,transparent)}
+.today::after{content:"";position:absolute;right:-40px;top:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08);pointer-events:none}
+.today-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.today-l span{font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.9}
+.today-l small{font-size:10px;margin-left:6px;padding:1px 6px;border:1px solid rgba(255,255,255,.6);border-radius:4px;font-weight:500}
+.today-l b{font-size:36px;font-weight:900;line-height:1.1;letter-spacing:-.01em;display:inline-block;transform-origin:left bottom}
+.today-l b.up{animation:bump .6s var(--spring) .65s}
+.today-r{display:flex;gap:12px;font-size:12px;opacity:.95;white-space:nowrap}
+.today-r b{font-size:16px;margin:0 1px}
+.today i{width:100%;font-style:normal;font-size:11px;opacity:.85}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 8px;display:flex;flex-direction:column;gap:2px;min-width:0;box-shadow:var(--shadow)}
 .kpi span{font-size:11px;color:var(--muted)}
@@ -342,6 +365,7 @@ thead th{border-top:0;font-size:11px;color:var(--muted);font-weight:700;backgrou
   <div class="dr-back" data-act="closeMenu"></div>
   <nav class="dr-panel" aria-label="メニュー">
     <div class="dr-head"><span class="mark" role="img" aria-label="ReD"></span><button class="dr-close" data-act="closeMenu" aria-label="メニューを閉じる">×</button></div>
+    <div class="dr-user" id="drUser"></div>
     <button class="dr-item" data-act="tab" data-tab="rec"><b>記録</b><small>接客カウンター・販売</small></button>
     <button class="dr-item" data-act="tab" data-tab="stock"><b>欠品チェック</b><small>色×サイズの在庫</small></button>
     <button class="dr-item" data-act="tab" data-tab="report"><b>日報</b><small>退勤時の入力・Claude用データ</small></button>
@@ -395,6 +419,7 @@ setD([23,24],{s:['S','M','L'],c:['ブラック','ネイビー','グレー','ピ�
 setD([25,26,27,28,29,30,31,32],{s:['S','M','L'],c:[],on:false});
 DEF[33]={s:['23-25','25-27'],c:['レッド','ホワイト','ネイビー','グレー','ブラック'],on:true,price:'1980'};
 setD([34,35,36],{s:[],c:[],on:false});
+const PRICE={10:3960,11:3960,12:3960,13:3960,14:4290,15:4290,16:4290,17:4950,21:7700,22:7700,23:6600,24:6600,29:8800,30:7700,31:7700,32:6600,33:1980,34:6600,35:7700};
 const sk=(p,sz,co)=>`${p}|${sz}|${co}`;
 const vlabel=(co,sz)=>`${co||''}${co&&sz?' ':''}${sz||''}`;
 const GROUPS=['インナー半袖','インナー長袖','スリープ','スウェット','パジャマ','ソックス','指定店舗のみ'];
@@ -410,6 +435,7 @@ const COUNTERS=[
  {k:'sample',label:'サンプル体験',note:'お客様が自分で手に取った'},
 ];
 const TABS=['rec','stock','report','stats'];
+const NEED_START=['stock','report'];
 const PAGE={rec:'記録',stock:'欠品チェック',report:'日報',stats:'分析',set:'設定'};
 /* 日報フォームの選択肢（3. 屋号 / 4. 入店舗名）と同じ表記 */
 const BRANDS=['ビックカメラ','ヨドバシカメラ','エディオン','ハンズ','ロフト','ゼビオ','アピタ','ゆめタウン'];
@@ -432,7 +458,7 @@ const nowHM=()=>{const d=new Date();return `${pad(d.getHours())}:${pad(d.getMinu
 const wd=iso=>{const [y,m,d]=iso.split('-').map(Number);return '日月火水木金土'[new Date(y,m-1,d).getDay()]};
 const md=iso=>{const [,m,d]=iso.split('-').map(Number);return `${m}/${d}（${wd(iso)}）`};
 const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
-const yen=n=>n.toLocaleString('ja-JP')+'円';
+const yen=n=>'¥'+n.toLocaleString('ja-JP');
 const ageLabel=a=>a==='60'?'60代以上':a+'代';
 const genderLabel=g=>g==='m'?'男性':'女性';
 const reduced=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -473,7 +499,7 @@ function defaultOn(n,st){
  if(n>=25&&n<=32)return st!=='ハンズ町田';
  return true;
 }
-function prodCfg(n,st=curStore()){const c=(S.storeProd[st]||{})[n]||{},d=DEF[n]||{s:[],c:[]};return {active:c.active??defaultOn(n,st),price:c.price??(d.price||''),sizes:c.sizes??d.s,colors:c.colors??d.c}}
+function prodCfg(n,st=curStore()){const c=(S.storeProd[st]||{})[n]||{},d=DEF[n]||{s:[],c:[]};return {active:c.active??defaultOn(n,st),price:c.price??(PRICE[n]!=null?String(PRICE[n]):''),sizes:c.sizes??d.s,colors:c.colors??d.c}}
 const dims=n=>{const c=prodCfg(n);return {sz:c.sizes.length?c.sizes:[''],cl:c.colors.length?c.colors:[''],has:c.sizes.length||c.colors.length}};
 const activeProducts=()=>PRODUCTS.filter(p=>prodCfg(p.n).active);
 function getDay(iso=ui.date){return S.days[iso]||newDay()}
@@ -582,8 +608,9 @@ function reportText(iso){
 function render(enter=false){
  $('#dateInput').value=ui.date;
  const ti=TABS.indexOf(ui.tab);
- $$('.dr-item').forEach((b,i)=>{b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');b.style.setProperty('--i',i)});
+ const on=started(getDay());$$('.dr-item').forEach((b,i)=>{b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');b.style.setProperty('--i',i);b.classList.toggle('locked',NEED_START.includes(b.dataset.tab)&&!on)});
  $('#storeName').innerHTML=`${esc(dayInfo(getDay()).store||'')}　<b>${PAGE[ui.tab]}</b>`;
+ if(NEED_START.includes(ui.tab)&&!started(getDay()))ui.tab='rec';
  const f={rec:renderRec,stock:renderStock,report:renderReport,stats:renderStats,set:renderSettings}[ui.tab];
  const m=$('#main');m.innerHTML=topBanners()+f();
  m.classList.toggle('enter',enter&&!reduced());
@@ -592,12 +619,13 @@ function render(enter=false){
  $$('.fstep .fill',m).forEach((f,i)=>f.style.setProperty('--i',i));
  if(enter)$$('[data-count]',m).forEach(countUp);
  if(ui.flash){const el=$(`[data-id="${ui.flash}"]`,m);if(el)el.classList.add('flash');ui.flash=null}
+ $$('.today [data-count]',m).forEach(countUp);
 }
 function countUp(el){
- const to=parseFloat(el.dataset.count),suf=el.dataset.suf||'',dec=+(el.dataset.dec||0);
- if(reduced()||!to){el.textContent=(dec?to.toFixed(dec):to.toLocaleString('ja-JP'))+suf;return}
+ const to=parseFloat(el.dataset.count),from=parseFloat(el.dataset.from||0),suf=el.dataset.suf||'',pre=el.dataset.pre||'',dec=+(el.dataset.dec||0);
+ if(reduced()||!to||from===to){el.textContent=pre+(dec?to.toFixed(dec):to.toLocaleString('ja-JP'))+suf;return}
  const t0=performance.now(),dur=700;
- const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),v=to*e;el.textContent=(dec?v.toFixed(dec):Math.round(v).toLocaleString('ja-JP'))+suf;if(k<1)requestAnimationFrame(step)};
+ const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),v=from+(to-from)*e;el.textContent=pre+(dec?v.toFixed(dec):Math.round(v).toLocaleString('ja-JP'))+suf;if(k<1)requestAnimationFrame(step)};
  requestAnimationFrame(step);
 }
 function topBanners(){
@@ -612,15 +640,28 @@ function recKpis(d){const st=stats(d);return `
   <div class="kpi"><span>接客率</span><b>${pct(d.c.serve,d.c.voice)}</b><i>接客÷声かけ</i></div>
   <div class="kpi"><span>購入率</span><b>${pct(st.buyers,d.c.serve)}</b><i>購入÷接客</i></div>
   <div class="kpi"><span>購入に至らず</span><b>${d.lost.length}件</b><i>うち欠品 ${d.lost.filter(l=>l.reasons.includes('サイズ・色の欠品')).length}件</i></div>`}
+function renderWelcome(){
+ const v=ui.nameDraft??S.settings.reporter??'';
+ return `<div class="welcome">
+  <span class="mark big" role="img" aria-label="ReD"></span>
+  <h1>販売記録へようこそ</h1>
+  <p class="muted">最初に、日報に載せる名前を登録してください。次からは入力しなくて大丈夫です。</p>
+  <div class="field" style="width:100%"><label for="wName">報告者名（漢字）</label><input id="wName" data-bind="nameDraft" value="${esc(v)}" placeholder="例：山田 太郎" autocomplete="name"></div>
+  <button class="btn primary big block" data-act="saveName" ${v.trim()?'':'disabled'}>この名前ではじめる</button>
+  <p class="muted small" style="margin:0">名前と記録はこのスマホの中にだけ保存されます。</p>
+ </div>`;
+}
+const initial=n=>(n||'').trim().slice(0,1);
 function renderStart(d){
- const info=dayInfo(d),f=ui.start||(ui.start={...info});
+ if(!S.settings.reporter||ui.editName)return renderWelcome();
+ const info=dayInfo(d),f=ui.start||(ui.start={...info});f.reporter=S.settings.reporter;
  const ok=f.reporter&&f.brand&&f.store;
  return `<div class="sec"><h2>業務開始</h2><div class="card start" style="display:flex;flex-direction:column;gap:12px">
-  <div class="field"><label for="stRep">1. 報告者名（漢字）</label><input id="stRep" data-bind="st" data-k="reporter" value="${esc(f.reporter)}" placeholder="例：山田 太郎" autocomplete="name"></div>
+  <div class="who"><span class="avatar">${esc(initial(f.reporter))}</span><span class="who-n"><small>1. 報告者名</small><b>${esc(f.reporter)}</b></span><button class="linkbtn" data-act="editName">変更</button></div>
   <div class="field"><label for="stDate">2. 報告日</label><input id="stDate" type="date" data-bind="stDate" value="${ui.date}"></div>
   <div class="field"><label for="stBrand">3. 屋号</label><select id="stBrand" data-bind="st" data-k="brand">${opts(BRANDS,f.brand,'選択してください')}</select></div>
   <div class="field"><label for="stStore">4. 入店舗名</label><select id="stStore" data-bind="st" data-k="store" ${f.brand?'':'disabled'}>${opts(f.brand?storesOf(f.brand):[],f.store,f.brand?'選択してください':'先に屋号を選択')}</select></div>
-  <span class="muted small">前回の内容が入っています。変わらなければそのまま業務開始を押してください。</span>
+  <span class="muted small">前回の出勤場所が入っています。変わらなければそのまま業務開始を押してください。業務開始後に、欠品チェックと日報が使えるようになります。</span>
  </div></div>
  <button class="btn primary big block" data-act="startDay" ${ok?'':'disabled'}>業務開始</button>
  ${CK()!==ui.date?`<p class="muted small" style="margin:0;text-align:center">開始後、欠品タブで出勤時の欠品チェックをしてください。</p>`:''}`;
@@ -630,7 +671,11 @@ function renderRec(){
  if(!started(d))return renderStart(d);
  const ctr=COUNTERS.map(c=>`<div class="ctr"><button class="tap" data-act="inc" data-k="${c.k}" aria-label="${c.label}を1増やす"><span class="lbl">${c.label}</span><span class="note">${c.note}</span><span class="num" data-num="${c.k}">${d.c[c.k]}</span></button><button class="minus" data-act="dec" data-k="${c.k}" aria-label="${c.label}を1減らす">−1</button></div>`).join('');
  const log=[...d.sales.map(s=>({...s,kind:'sale'})),...d.lost.map(l=>({...l,kind:'lost'}))].sort((a,b)=>a.t<b.t?1:-1);
+ const st=stats(d),from=ui.revFrom??st.revenue;ui.revFrom=null;
  return `
+ <div class="today"><div class="today-l"><span>本日の売上<small>税込</small></span><b data-count="${st.revenue}" data-from="${from}" data-pre="¥" class="${from!==st.revenue?'up':''}">${yen(st.revenue)}</b></div>
+  <div class="today-r"><span><b>${st.buyers}</b>名</span><span><b>${st.items}</b>点</span><span>客単価 <b>${st.buyers?yen(Math.round(st.revenue/st.buyers)):'—'}</b></span></div>
+  ${st.unpriced?`<i>価格未設定の商品${st.unpriced}点を含みません</i>`:''}</div>
  ${!d.closed&&CK()!==ui.date?`<div class="banner warn" style="flex-direction:row;align-items:center;justify-content:space-between"><span>今日の欠品チェックがまだです</span><button class="btn sm" data-act="tab" data-tab="stock">チェックする</button></div>`:''}
  ${d.closed?`<div class="banner closed"><div><b>業務終了済み</b>　${esc(d.closed)}</div><button class="btn sm" data-act="reopen">記録を再開</button></div>`:''}
  <div class="sec ${d.closed?'locked':''}"><div class="sec-head"><h2>${md(ui.date)}　接客カウンター</h2><span class="muted small">タップで＋1</span></div><div class="ctr-grid">${ctr}</div>
@@ -744,7 +789,7 @@ function renderStats(){
   <div class="kpi"><span>勤務日数</span><b data-count="${n}" data-suf="日">${n}日</b><i>${md(keys[0])}〜</i></div>
   <div class="kpi"><span>購入人数</span><b data-count="${T.buyers}" data-suf="名">${T.buyers}名</b><i>1日平均 ${(T.buyers/n).toFixed(1)}名</i></div>
   <div class="kpi"><span>販売点数</span><b data-count="${T.items}" data-suf="点">${T.items}点</b><i>1人 ${T.buyers?(T.items/T.buyers).toFixed(1):'—'}点</i></div>
-  <div class="kpi"><span>売上</span>${T.revenue?`<b data-count="${T.revenue}" data-suf="円">${yen(T.revenue)}</b>`:'<b>—</b>'}<i>${T.revenue?(T.unpriced?'単価未設定を除く':'単価×点数'):'設定で単価を入力'}</i></div>
+  <div class="kpi"><span>売上（税込）</span>${T.revenue?`<b data-count="${T.revenue}" data-pre="¥">${yen(T.revenue)}</b>`:'<b>—</b>'}<i>${T.revenue?(T.unpriced?'価格未設定を除く':'税込価格×点数'):'設定で価格を入力'}</i></div>
  </div>
  <div class="sec"><h2>接客の流れ</h2><div class="card funnel">
   ${fstep('声かけ',T.voice)}<div class="rate">接客率 <b>${pct(T.serve,T.voice)}</b></div>
@@ -766,7 +811,7 @@ function renderSettings(){
  const s=S.settings;
  const cs=cfgStore(),others=Object.keys(S.storeProd).filter(x=>x!==cs&&Object.keys(S.storeProd[x]).length);
  const prow=p=>{const c=prodCfg(p.n,cs);return `<div class="prow"><input type="checkbox" id="pa${p.n}" data-bind="pactive" data-n="${p.n}" ${c.active?'checked':''} aria-label="${esc(p.name)}を表示"><label class="nm" for="pa${p.n}">${esc(p.name)}<small>No.${p.n} ${esc(p.label)}</small></label>
-  <div class="opts"><input type="number" inputmode="numeric" placeholder="単価（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="単価"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
+  <div class="opts"><input type="number" inputmode="numeric" placeholder="税込価格（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="税込価格"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
  return `
  <div class="sec"><h2>報告者・店舗の初期値</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
   <div class="field"><label for="sRep">1. 報告者名（漢字）</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：山田 太郎"></div>
@@ -921,7 +966,8 @@ async function copyText(t){
 function locked(){if(getDay().closed){toast('業務終了済みです。「記録を再開」で編集できます');return true}return false}
 
 /* ===== メニュー ===== */
-function openMenu(){const d=$('#drawer');d.hidden=false;$('#menuBtn').setAttribute('aria-expanded','true');requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('show')))}
+function updateMenuUser(){const el=$('#drUser');if(!el)return;const n=S.settings.reporter;el.innerHTML=n?`<span class="avatar">${esc(initial(n))}</span><span class="who-n"><b>${esc(n)} さん</b><small>${esc(curStore())}</small></span><button class="linkbtn" data-act="editName">名前を変更</button>`:'';el.hidden=!n}
+function openMenu(){updateMenuUser();const d=$('#drawer');d.hidden=false;$('#menuBtn').setAttribute('aria-expanded','true');requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('show')))}
 function closeMenu(){const d=$('#drawer');if(d.hidden)return;d.classList.remove('show');$('#menuBtn').setAttribute('aria-expanded','false');setTimeout(()=>{if(!d.classList.contains('show'))d.hidden=true},reduced()?0:380)}
 
 /* ===== 操作 ===== */
@@ -933,7 +979,7 @@ document.addEventListener('click',e=>{
  switch(a){
   case 'openMenu':openMenu();break;
   case 'closeMenu':closeMenu();break;
-  case 'tab':{closeMenu();ui.cfgStore=null;ui.tab=b.dataset.tab;render(true);window.scrollTo({top:0,behavior:reduced()?'auto':'smooth'});break}
+  case 'tab':{closeMenu();ui.cfgStore=null;if(NEED_START.includes(b.dataset.tab)&&!started(getDay())){ui.tab='rec';render(true);window.scrollTo(0,0);toast('先に業務開始をしてください');break}ui.tab=b.dataset.tab;render(true);window.scrollTo({top:0,behavior:reduced()?'auto':'smooth'});break}
   case 'crowd':{const d=editDay();d.crowd=d.crowd===b.dataset.v?'':b.dataset.v;save();buzz();if(ui.missing)ui.missing=ui.missing.filter(x=>x!=='crowd');if(sh)renderSheet();else render();break}
   case 'inc':if(locked())break;editDay().c[b.dataset.k]++;save();buzz();if(b.classList.contains('tap'))ripple(b,e);bumpCounter(b.dataset.k,'+1');break;
   case 'inc10':if(locked())break;editDay().c[b.dataset.k]+=10;save();buzz();bumpCounter(b.dataset.k,'+10');break;
@@ -956,7 +1002,7 @@ document.addEventListener('click',e=>{
   case 'sAge':D.age=D.age===b.dataset.v?'':b.dataset.v;renderSheet();break;
   case 'flag':D[b.dataset.k]=!D[b.dataset.k];renderSheet();break;
   case 'rchip':D.reason=D.reason?D.reason+'、'+b.dataset.v:b.dataset.v;renderSheet();break;
-  case 'saveSale':{const d=editDay(),rec={...D,id:sh.id||uid()};const outs=rec.items.filter(i=>i.out);rec.items=rec.items.map(({out,os,oc,...r})=>r);
+  case 'saveSale':{ui.revFrom=stats(getDay()).revenue;const d=editDay(),rec={...D,id:sh.id||uid()};const outs=rec.items.filter(i=>i.out);rec.items=rec.items.map(({out,os,oc,...r})=>r);
    if(sh.id){d.sales[d.sales.findIndex(x=>x.id===sh.id)]=rec}else d.sales.push(rec);
    let done=0,skip=0;outs.forEach(i=>{const c=prodCfg(i.p);if((c.sizes.length&&!i.os)||(c.colors.length&&!i.oc)){skip++;return}ST()[sk(i.p,i.os||'',i.oc||'')]='out';done++});
    save();buzz(20);closeSheet();ui.flash=rec.id;render();toast(skip?`保存しました。サイズ・色が未選択の${skip}件は欠品に反映していません`:done?'保存し、欠品に反映しました':'販売を保存しました');break}
@@ -971,6 +1017,8 @@ document.addEventListener('click',e=>{
   case 'stockDone':S.checkedBy[curStore()]=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
   case 'copy':copyText(chromeText(ui.date));break;
+  case 'editName':ui.editName=true;ui.nameDraft=S.settings.reporter;closeMenu();ui.tab='rec';render(true);break;
+  case 'saveName':{const v=(ui.nameDraft??'').trim().replace(/\s+/g,' ');if(!v)break;S.settings.reporter=v;const d=S.days[ui.date];if(d&&!d.closed&&d.started)d.reporter=v;save();ui.editName=false;ui.nameDraft=null;if(ui.start)ui.start.reporter=v;buzz(30);render(true);updateMenuUser();toast(`${v}さんで登録しました`);break}
   case 'startDay':{const f=ui.start;if(!(f&&f.reporter&&f.brand&&f.store))break;const d=editDay();Object.assign(d,{reporter:f.reporter.trim(),brand:f.brand,store:f.store,started:nowHM()});
    Object.assign(S.settings,{reporter:d.reporter,brand:d.brand,store:d.store});save();buzz(30);ui.start=null;render(true);toast('業務を開始しました');break}
   case 'copyCfg':{const from=$('#copyFrom').value;if(!from){toast('コピー元を選んでください');break}   S.storeProd[cfgStore()]=Object.fromEntries(PRODUCTS.map(x=>[x.n,JSON.parse(JSON.stringify(prodCfg(x.n,from)))]));save();ui.confirm=null;render();toast(`${from}の設定をコピーしました`);break}
@@ -991,6 +1039,7 @@ function onInput(e){
   case 'txt':{const d=editDay();d.txt=d.txt||{};d.txt[el.dataset.n]=el.value;save();refreshOutputs();break}
   case 'wrap':case 'flyerLeft':{editDay()[bd]=el.value;save();refreshOutputs();el.closest('.field')?.classList.remove('missing');break}
   case 'set':S.settings[el.dataset.k]=el.value;save();break;
+  case 'nameDraft':{ui.nameDraft=el.value;const btn=$('[data-act=saveName]');if(btn)btn.disabled=!el.value.trim();break}
   case 'st':{ui.start[el.dataset.k]=el.value;const btn=$('[data-act=startDay]');if(btn){const f=ui.start;btn.disabled=!(f.reporter&&f.brand&&f.store)}break}
   case 'pprice':(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{}).price=el.value;save();break;
   case 'plist':(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{})[el.dataset.f]=el.value.split(/[,、，]/).map(x=>x.trim()).filter(Boolean);save();break;
