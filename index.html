@@ -43,7 +43,7 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{padding-top:env(safe-area-inset-top,0px)}
+html{padding-top:env(safe-area-inset-top,0px);overflow-x:clip}
 body{margin:0}
 img{max-width:100%}
 html,body{background:var(--bg)}
@@ -57,13 +57,13 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
 header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform-origin:left;animation:grow .9s var(--ease) both}
 header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
-.brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
-.mark{display:block;width:68px;height:21px;background:var(--brand);-webkit-mask:url(logo-mask.png) left center/contain no-repeat;mask:url(logo-mask.png) left center/contain no-repeat}
-.brand span:last-child{display:flex;flex-direction:column;line-height:1.25}
-.brand b{font-size:13px}
-.brand small{font-size:11px;color:var(--muted)}
-.datebox{margin-left:auto;display:flex;align-items:center;gap:6px}
-.datebox input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;font-size:14px;min-width:0;width:140px}
+.brand{display:flex;align-items:center;gap:8px;white-space:nowrap;min-width:0;flex:1 1 auto}
+.mark{display:block;flex:none;width:68px;height:21px;background:var(--brand);-webkit-mask:url(logo-mask.png) left center/contain no-repeat;mask:url(logo-mask.png) left center/contain no-repeat}
+.brand span:last-child{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.brand b{font-size:14px;color:var(--accent);overflow:hidden;text-overflow:ellipsis}
+.brand small{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.datebox{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.datebox input{-webkit-appearance:none;appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;font-size:14px;min-width:0;width:128px;height:38px;text-align:center;font-size:13px}
 .iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13px;white-space:nowrap;transition:background .2s,border-color .2s,transform .12s}
 .iconbtn:active{transform:scale(.95)}
 .iconbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
@@ -103,7 +103,6 @@ main .wrap{display:flex;flex-direction:column;gap:14px;padding-block:14px}
 .dr-item.locked b,.dr-item.locked small{color:var(--muted);opacity:.55}
 .dr-item.locked b::after{content:"業務開始後";margin-left:8px;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--surface-2);color:var(--muted);vertical-align:2px}
 .dr-sep{height:1px;background:var(--line);margin:8px 4px}
-.brand small b{font-weight:500;color:var(--accent)}
 
 h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:0}
 .sec{display:flex;flex-direction:column;gap:8px}
@@ -352,7 +351,7 @@ thead th{border-top:0;font-size:11px;color:var(--muted);font-weight:700;backgrou
 <body>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><span class="mark" role="img" aria-label="ReD"></span><span><b>販売記録</b><small id="storeName">ハンズ町田</small></span></div>
+  <div class="brand"><span class="mark" role="img" aria-label="ReD"></span><span><b id="pageName">記録</b><small id="storeName">ハンズ町田</small></span></div>
   <div class="datebox">
     <input type="date" id="dateInput" aria-label="記録する日">
     <button class="menubtn" id="menuBtn" data-act="openMenu" aria-label="メニューを開く" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -443,7 +442,7 @@ const BRANDS=['ビックカメラ','ヨドバシカメラ','エディオン','�
 const STORES=['ビックカメラ有楽町','ビックカメラ池袋本','ビックカメラ新宿西口','ビックカメラ川崎','ビックカメラ柏','ビックカメラ大宮西','ビックカメラ立川','ビックカメラ札幌東急','ビックカメラ名古屋JR ゲートタワー','ビックカメラなんば','ビックカメラ新宿東口旧ビックロ','ビックカメラ千葉駅前','ビックカメラ藤沢','ビックカメラ池袋西口ITtower','ヨドバシカメラAkiba','ヨドバシカメラ横浜','ヨドバシカメラ新宿西口','ヨドバシカメラ京都','エディオンなんば','ハンズ博多','ハンズ新宿','ロフト渋谷','ロフト吉祥寺','ロフト千葉','ロフト銀座','ハンズ北千住','ハンズ横浜','ハンズ町田','ハンズ東京','西宮ロフト','横浜ロフト','ゼビオ札幌月寒','アピタ浜北','ゆめタウン久留米','ゆめタウン高松','池袋ロフト'];
 const storesOf=b=>STORES.filter(x=>x.includes(b));
 const opts=(list,cur,ph)=>`<option value="">${ph}</option>`+list.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('');
-const dayInfo=(d)=>({reporter:d.reporter||S.settings.reporter,brand:d.brand||S.settings.brand,store:d.store||S.settings.store});
+const dayInfo=(d)=>({reporter:noSpace(d.reporter||S.settings.reporter),brand:d.brand||S.settings.brand,store:d.store||S.settings.store});
 const started=d=>!!(d.started||d.closed||hasActivity(d));
 const KEY='red-hanbai-v1';
 
@@ -483,6 +482,7 @@ if(S.settings.prod||S.stock){const st0=S.settings.store||'ハンズ町田';
  delete S.settings.prod;delete S.stock;delete S.stockChecked;save()}
 }
 normalize();
+if(S.settings.reporter&&/[\s\u3000]/.test(S.settings.reporter)){S.settings.reporter=S.settings.reporter.replace(/[\s\u3000]+/g,'');save()}
 function applyTheme(){const t=S.settings.theme||'light';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)}
 applyTheme();
 const ui={tab:'rec',date:today(),sheet:null,period:'all',confirm:null,flash:null};
@@ -613,7 +613,7 @@ function render(enter=false){
  $('#dateInput').value=ui.date;
  const ti=TABS.indexOf(ui.tab);
  const on=started(getDay());$$('.dr-item').forEach((b,i)=>{b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');b.style.setProperty('--i',i);b.classList.toggle('locked',NEED_START.includes(b.dataset.tab)&&!on)});
- $('#storeName').innerHTML=`${esc(dayInfo(getDay()).store||'')}　<b>${PAGE[ui.tab]}</b>`;
+ $('#pageName').textContent=PAGE[ui.tab];$('#storeName').textContent=dayInfo(getDay()).store||'';
  if(NEED_START.includes(ui.tab)&&!started(getDay()))ui.tab='rec';
  const f={rec:renderRec,stock:renderStock,report:renderReport,stats:renderStats,set:renderSettings}[ui.tab];
  const m=$('#main');m.innerHTML=topBanners()+f();
@@ -649,12 +649,13 @@ function renderWelcome(){
  return `<div class="welcome">
   <span class="mark big" role="img" aria-label="ReD"></span>
   <h1>販売記録へようこそ</h1>
-  <p class="muted">最初に、日報に載せる名前を登録してください。次からは入力しなくて大丈夫です。</p>
-  <div class="field" style="width:100%"><label for="wName">報告者名（漢字）</label><input id="wName" data-bind="nameDraft" value="${esc(v)}" placeholder="例：山田 太郎" autocomplete="name"></div>
+  <p class="muted">最初に、日報に載せる名前を登録してください（姓と名の間にスペースは入れません）。次からは入力しなくて大丈夫です。</p>
+  <div class="field" style="width:100%"><label for="wName">報告者名（漢字）</label><input id="wName" data-bind="nameDraft" value="${esc(v)}" placeholder="例：山田太郎" autocomplete="name"></div>
   <button class="btn primary big block" data-act="saveName" ${v.trim()?'':'disabled'}>この名前ではじめる</button>
   <p class="muted small" style="margin:0">名前と記録はこのスマホの中にだけ保存されます。</p>
  </div>`;
 }
+const noSpace=v=>String(v||'').replace(/[\s\u3000]+/g,'');
 const initial=n=>(n||'').trim().slice(0,1);
 function renderStart(d){
  if(!S.settings.reporter||ui.editName)return renderWelcome();
@@ -819,7 +820,7 @@ function renderSettings(){
   <div class="opts"><input type="number" inputmode="numeric" placeholder="税込価格（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="税込価格"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
  return `
  <div class="sec"><h2>報告者・店舗の初期値</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
-  <div class="field"><label for="sRep">1. 報告者名（漢字）</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：山田 太郎"></div>
+  <div class="field"><label for="sRep">1. 報告者名（漢字）</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：山田太郎"></div>
   <div class="two"><div class="field"><label for="sBrand">3. 屋号</label><select id="sBrand" data-bind="setBrand">${opts(BRANDS,s.brand,'選択してください')}</select></div>
   <div class="field"><label for="sStore">4. 入店舗名</label><select id="sStore" data-bind="setStore">${opts(s.brand?storesOf(s.brand):STORES,s.store,'選択してください')}</select></div></div>
   <span class="muted small">業務開始の画面に入る初期値です。その日の内容は業務開始の画面で変えられます。</span>
@@ -1024,7 +1025,7 @@ document.addEventListener('click',e=>{
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
   case 'copy':copyText(chromeText(ui.date,b.dataset.what==='ai'));break;
   case 'editName':ui.editName=true;ui.nameDraft=S.settings.reporter;closeMenu();ui.tab='rec';render(true);break;
-  case 'saveName':{const v=(ui.nameDraft??'').trim().replace(/\s+/g,' ');if(!v)break;S.settings.reporter=v;const d=S.days[ui.date];if(d&&!d.closed&&d.started)d.reporter=v;save();ui.editName=false;ui.nameDraft=null;if(ui.start)ui.start.reporter=v;buzz(30);render(true);updateMenuUser();toast(`${v}さんで登録しました`);break}
+  case 'saveName':{const v=noSpace(ui.nameDraft??'');if(!v)break;S.settings.reporter=v;const d=S.days[ui.date];if(d&&!d.closed&&d.started)d.reporter=v;save();ui.editName=false;ui.nameDraft=null;if(ui.start)ui.start.reporter=v;buzz(30);render(true);updateMenuUser();toast(`${v}さんで登録しました`);break}
   case 'startDay':{const f=ui.start;if(!(f&&f.reporter&&f.brand&&f.store))break;const d=editDay();Object.assign(d,{reporter:f.reporter.trim(),brand:f.brand,store:f.store,started:nowHM()});
    Object.assign(S.settings,{reporter:d.reporter,brand:d.brand,store:d.store});save();buzz(30);ui.start=null;render(true);toast('業務を開始しました');break}
   case 'copyCfg':{const from=$('#copyFrom').value;if(!from){toast('コピー元を選んでください');break}   S.storeProd[cfgStore()]=Object.fromEntries(PRODUCTS.map(x=>[x.n,JSON.parse(JSON.stringify(prodCfg(x.n,from)))]));save();ui.confirm=null;render();toast(`${from}の設定をコピーしました`);break}
@@ -1044,7 +1045,7 @@ function onInput(e){
   case 'sd':D[el.dataset.k]=el.value;break;
   case 'txt':{const d=editDay();d.txt=d.txt||{};d.txt[el.dataset.n]=el.value;save();refreshOutputs();break}
   case 'wrap':case 'flyerLeft':{editDay()[bd]=el.value;save();refreshOutputs();el.closest('.field')?.classList.remove('missing');break}
-  case 'set':S.settings[el.dataset.k]=el.value;save();break;
+  case 'set':S.settings[el.dataset.k]=el.dataset.k==='reporter'?noSpace(el.value):el.value;save();break;
   case 'nameDraft':{ui.nameDraft=el.value;const btn=$('[data-act=saveName]');if(btn)btn.disabled=!el.value.trim();break}
   case 'st':{ui.start[el.dataset.k]=el.value;const btn=$('[data-act=startDay]');if(btn){const f=ui.start;btn.disabled=!(f.reporter&&f.brand&&f.store)}break}
   case 'pprice':(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{}).price=el.value;save();break;

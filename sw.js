@@ -1,5 +1,5 @@
 // 圏外でも開けるよう、アプリ本体をキャッシュする。更新時は CACHE の番号を上げる。
-const CACHE = 'red-hanbai-v13';
+const CACHE = 'red-hanbai-v15';
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './favicon.png', './logo-mask.png'];
 
 self.addEventListener('install', e => {
