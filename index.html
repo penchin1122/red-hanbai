@@ -209,6 +209,8 @@ h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin
 .field .hint{font-size:11px;color:var(--muted)}
 .field input,.field textarea,.field select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;width:100%;min-width:0;transition:border-color .2s,box-shadow .2s}
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field input[type=date]{-webkit-appearance:none;appearance:none;display:block;max-width:100%;min-height:42px;text-align:left}
+.field input[type=date]::-webkit-date-and-time-value{text-align:left}
 .field textarea{min-height:64px;resize:vertical;line-height:1.5}
 .field.missing input{border-color:var(--accent);animation:shake .35s}
 .field-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -571,8 +573,8 @@ function renderStart(d){
  const info=dayInfo(d),f=ui.start||(ui.start={...info});
  const ok=f.reporter&&f.brand&&f.store;
  return `<div class="sec"><h2>業務開始</h2><div class="card start" style="display:flex;flex-direction:column;gap:12px">
-  <div class="field"><label for="stDate">2. 報告日</label><input id="stDate" type="date" data-bind="stDate" value="${ui.date}"></div>
   <div class="field"><label for="stRep">1. 報告者名（漢字）</label><input id="stRep" data-bind="st" data-k="reporter" value="${esc(f.reporter)}" placeholder="例：山田 太郎" autocomplete="name"></div>
+  <div class="field"><label for="stDate">2. 報告日</label><input id="stDate" type="date" data-bind="stDate" value="${ui.date}"></div>
   <div class="field"><label for="stBrand">3. 屋号</label><select id="stBrand" data-bind="st" data-k="brand">${opts(BRANDS,f.brand,'選択してください')}</select></div>
   <div class="field"><label for="stStore">4. 入店舗名</label><select id="stStore" data-bind="st" data-k="store" ${f.brand?'':'disabled'}>${opts(f.brand?storesOf(f.brand):[],f.store,f.brand?'選択してください':'先に屋号を選択')}</select></div>
   <span class="muted small">前回の内容が入っています。変わらなければそのまま業務開始を押してください。</span>
