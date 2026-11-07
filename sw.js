@@ -1,6 +1,6 @@
 // 圏外でも開けるよう、アプリ本体をキャッシュする。更新時は CACHE の番号を上げる。
-const CACHE = 'red-hanbai-v5';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon.png'];
+const CACHE = 'red-hanbai-v7';
+const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/favicon.png', './icons/logo-mask.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));

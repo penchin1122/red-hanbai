@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>ReD 販売記録</title>
 <meta name="description" content="ReD販売員用の販売記録・欠品チェック・日報作成アプリ">
-<meta name="theme-color" content="#c8161d">
+<meta name="theme-color" content="#e60014">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -20,7 +20,7 @@
 /* 片手操作のスマホ用ツール。上に日付バー、中央に1画面分の作業、下に固定タブ。赤＝操作と注意、墨色＝選択状態。 */
 :root{
   --bg:#f7f4f4; --surface:#ffffff; --surface-2:#f1eded; --fg:#1d1b1c; --muted:#6b6467; --line:#e3dcdc;
-  --accent:#c8161d; --accent-fg:#ffffff; --accent-soft:#fdeceb; --accent-deep:#9e1015;
+  --accent:#e60014; --accent-fg:#ffffff; --accent-soft:#fde8ea; --accent-deep:#b0000f; --brand:#e60014;
   --ink:#26232a; --ink-fg:#ffffff;
   --ok:#1b7a45; --ok-soft:#e4f3ea; --warn:#9a5c00; --warn-soft:#fdf1dc;
   --shadow:0 1px 2px rgba(60,20,20,.06),0 4px 14px rgba(60,20,20,.06);
@@ -30,13 +30,13 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#141213; --surface:#1e1a1b; --surface-2:#282324; --fg:#efeaea; --muted:#aba2a4; --line:#3a3334;
-  --accent:#ff5a55; --accent-fg:#2a0607; --accent-soft:#3b1716; --accent-deep:#ff8a85;
+  --accent:#ff3b47; --accent-fg:#ffffff; --accent-soft:#3d1418; --accent-deep:#ff8088; --brand:#ff3b47;
   --ink:#ece7e8; --ink-fg:#18151a;
   --ok:#62cc8f; --ok-soft:#163324; --warn:#f2b456; --warn-soft:#3a2b12;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#141213; --surface:#1e1a1b; --surface-2:#282324; --fg:#efeaea; --muted:#aba2a4; --line:#3a3334;
-  --accent:#ff5a55; --accent-fg:#2a0607; --accent-soft:#3b1716; --accent-deep:#ff8a85;
+  --accent:#ff3b47; --accent-fg:#ffffff; --accent-soft:#3d1418; --accent-deep:#ff8088; --brand:#ff3b47;
   --ink:#ece7e8; --ink-fg:#18151a;
   --ok:#62cc8f; --ok-soft:#163324; --warn:#f2b456; --warn-soft:#3a2b12;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
@@ -58,7 +58,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform-origin:left;animation:grow .9s var(--ease) both}
 header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
 .brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
-.mark{font-weight:900;font-size:22px;letter-spacing:-.02em;color:var(--accent);line-height:1}
+.mark{display:block;width:68px;height:21px;background:var(--brand);-webkit-mask:url(icons/logo-mask.png) left center/contain no-repeat;mask:url(icons/logo-mask.png) left center/contain no-repeat}
 .brand span:last-child{display:flex;flex-direction:column;line-height:1.25}
 .brand b{font-size:13px}
 .brand small{font-size:11px;color:var(--muted)}
@@ -68,14 +68,29 @@ header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
 .iconbtn:active{transform:scale(.95)}
 .iconbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
 
-main{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+main{padding-bottom:calc(32px + env(safe-area-inset-bottom,0px))}
 main .wrap{display:flex;flex-direction:column;gap:14px;padding-block:14px}
 
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav.tabs .wrap{position:relative;display:grid;grid-template-columns:repeat(4,1fr);padding-block:6px}
-nav.tabs .pill{position:absolute;top:6px;bottom:6px;left:max(16px,env(safe-area-inset-left,0px));width:calc((100% - max(16px,env(safe-area-inset-left,0px)) - max(16px,env(safe-area-inset-right,0px)))/4);background:var(--accent-soft);border-radius:10px;transition:transform .45s var(--spring),opacity .2s}
-nav.tabs button{position:relative;border:0;background:none;border-radius:10px;padding:9px 0;font-size:13px;color:var(--muted);font-weight:500;transition:color .25s}
-nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:700}
+.menubtn{width:42px;height:38px;border:1px solid var(--line);background:var(--surface);border-radius:10px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:transform .12s}
+.menubtn:active{transform:scale(.92)}
+.menubtn span{display:block;width:18px;height:2px;border-radius:1px;background:var(--fg)}
+#drawer{position:fixed;inset:0;z-index:55}
+.dr-back{position:absolute;inset:0;background:rgba(20,8,8,0);transition:background .3s var(--ease)}
+#drawer.show .dr-back{background:rgba(20,8,8,.45)}
+.dr-panel{position:absolute;top:0;right:0;bottom:0;width:min(300px,82%);background:var(--surface);box-shadow:-10px 0 30px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:4px;padding:calc(14px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) 14px;transform:translateX(100%);transition:transform .38s var(--ease);overflow-y:auto}
+#drawer.show .dr-panel{transform:none}
+.dr-head{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 14px;border-bottom:2px solid var(--accent);margin-bottom:8px}
+.dr-head .mark{width:80px;height:25px}
+.dr-close{border:0;background:var(--surface-2);width:36px;height:36px;border-radius:50%;font-size:20px;line-height:1;color:var(--muted)}
+.dr-item{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:0;background:none;border-radius:10px;padding:12px 14px;text-align:left;transition:background .2s;opacity:0;transform:translateX(16px)}
+#drawer.show .dr-item{opacity:1;transform:none;transition:opacity .35s var(--ease),transform .35s var(--ease),background .2s;transition-delay:calc(var(--i,0)*40ms + 80ms)}
+.dr-item b{font-size:16px}
+.dr-item small{font-size:11px;color:var(--muted)}
+.dr-item:active{background:var(--surface-2)}
+.dr-item[aria-current="page"]{background:var(--accent-soft)}
+.dr-item[aria-current="page"] b{color:var(--accent)}
+.dr-sep{height:1px;background:var(--line);margin:8px 4px}
+.brand small b{font-weight:500;color:var(--accent)}
 
 h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:0}
 .sec{display:flex;flex-direction:column;gap:8px}
@@ -305,31 +320,36 @@ thead th{border-top:0;font-size:11px;color:var(--muted);font-weight:700;backgrou
 .done .kpis{width:100%;animation:rise .45s .9s var(--ease) both}
 .done .acts{width:100%;display:flex;flex-direction:column;gap:8px;animation:rise .45s 1.05s var(--ease) both}
 
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--ink-fg);padding:10px 18px;border-radius:999px;font-size:13px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastIn .35s var(--spring)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--ink-fg);padding:10px 18px;border-radius:999px;font-size:13px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastIn .35s var(--spring)}
 
 @media (max-width:380px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ctr .num{font-size:34px}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.panel{transform:none}.done circle,.done path{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.dr-item{opacity:1;transform:none}.panel{transform:none}.done circle,.done path{stroke-dashoffset:0}}
 </style>
 </head>
 <body>
 
 <header class="top"><div class="wrap">
-  <div class="brand"><span class="mark">ReD</span><span><b>販売記録</b><small id="storeName">ハンズ町田</small></span></div>
+  <div class="brand"><span class="mark" role="img" aria-label="ReD"></span><span><b>販売記録</b><small id="storeName">ハンズ町田</small></span></div>
   <div class="datebox">
     <input type="date" id="dateInput" aria-label="記録する日">
-    <button class="iconbtn" id="setBtn" data-act="tab" data-tab="set" aria-pressed="false">設定</button>
+    <button class="menubtn" id="menuBtn" data-act="openMenu" aria-label="メニューを開く" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
 </div></header>
 
 <main><div class="wrap" id="main"></div></main>
 
-<nav class="tabs" aria-label="画面"><div class="wrap">
-  <span class="pill" id="pill"></span>
-  <button data-act="tab" data-tab="rec">記録</button>
-  <button data-act="tab" data-tab="stock">欠品</button>
-  <button data-act="tab" data-tab="report">日報</button>
-  <button data-act="tab" data-tab="stats">分析</button>
-</div></nav>
+<div id="drawer" hidden>
+  <div class="dr-back" data-act="closeMenu"></div>
+  <nav class="dr-panel" aria-label="メニュー">
+    <div class="dr-head"><span class="mark" role="img" aria-label="ReD"></span><button class="dr-close" data-act="closeMenu" aria-label="メニューを閉じる">×</button></div>
+    <button class="dr-item" data-act="tab" data-tab="rec"><b>記録</b><small>接客カウンター・販売</small></button>
+    <button class="dr-item" data-act="tab" data-tab="stock"><b>欠品チェック</b><small>色×サイズの在庫</small></button>
+    <button class="dr-item" data-act="tab" data-tab="report"><b>日報</b><small>退勤時の入力・Claude用データ</small></button>
+    <button class="dr-item" data-act="tab" data-tab="stats"><b>分析</b><small>接客の流れ・売れ筋</small></button>
+    <div class="dr-sep"></div>
+    <button class="dr-item" data-act="tab" data-tab="set"><b>設定</b><small>取り扱い商品・バックアップ</small></button>
+  </nav>
+</div>
 
 <div id="sheet" hidden></div>
 <div id="toast" hidden></div>
@@ -390,6 +410,7 @@ const COUNTERS=[
  {k:'sample',label:'サンプル体験',note:'お客様が自分で手に取った'},
 ];
 const TABS=['rec','stock','report','stats'];
+const PAGE={rec:'記録',stock:'欠品チェック',report:'日報',stats:'分析',set:'設定'};
 /* 日報フォームの選択肢（3. 屋号 / 4. 入店舗名）と同じ表記 */
 const BRANDS=['ビックカメラ','ヨドバシカメラ','エディオン','ハンズ','ロフト','ゼビオ','アピタ','ゆめタウン'];
 const STORES=['ビックカメラ有楽町','ビックカメラ池袋本','ビックカメラ新宿西口','ビックカメラ川崎','ビックカメラ柏','ビックカメラ大宮西','ビックカメラ立川','ビックカメラ札幌東急','ビックカメラ名古屋JR ゲートタワー','ビックカメラなんば','ビックカメラ新宿東口旧ビックロ','ビックカメラ千葉駅前','ビックカメラ藤沢','ビックカメラ池袋西口ITtower','ヨドバシカメラAkiba','ヨドバシカメラ横浜','ヨドバシカメラ新宿西口','ヨドバシカメラ京都','エディオンなんば','ハンズ博多','ハンズ新宿','ロフト渋谷','ロフト吉祥寺','ロフト千葉','ロフト銀座','ハンズ北千住','ハンズ横浜','ハンズ町田','ハンズ東京','西宮ロフト','横浜ロフト','ゼビオ札幌月寒','アピタ浜北','ゆめタウン久留米','ゆめタウン高松','池袋ロフト'];
@@ -425,13 +446,34 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}c
 
 let S=load();
 if(!S){S=blank();save()}
-S.settings.prod=S.settings.prod||{};
+/* 出勤場所ごとに「取り扱い商品の設定」と「欠品の状態」を分けて持つ */
+function normalize(){
+S.storeProd=S.storeProd||{};S.stockBy=S.stockBy||{};S.checkedBy=S.checkedBy||{};
+if(S.settings.prod||S.stock){const st0=S.settings.store||'ハンズ町田';
+ if(S.settings.prod&&Object.keys(S.settings.prod).length&&!S.storeProd[st0])S.storeProd[st0]=S.settings.prod;
+ if(S.stock&&Object.keys(S.stock).length&&!S.stockBy[st0])S.stockBy[st0]=S.stock;
+ if(S.stockChecked&&!S.checkedBy[st0])S.checkedBy[st0]=S.stockChecked;
+ delete S.settings.prod;delete S.stock;delete S.stockChecked;save()}
+}
+normalize();
 function applyTheme(){const t=S.settings.theme||'light';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)}
 applyTheme();
 const ui={tab:'rec',date:today(),sheet:null,period:'all',confirm:null,flash:null};
 
 /* ===== データ参照 ===== */
-function prodCfg(n){const c=S.settings.prod[n]||{},d=DEF[n]||{s:[],c:[],on:true};return {active:c.active??d.on,price:c.price??(d.price||''),sizes:c.sizes??d.s,colors:c.colors??d.c}}
+function curStore(){const d=S.days[ui.date];return (d&&d.store)||(ui.start&&ui.start.store)||S.settings.store||'ハンズ町田'}
+const cfgStore=()=>ui.cfgStore||curStore();
+const PC=st=>S.storeProd[st]||(S.storeProd[st]={});
+const ST=(st=curStore())=>S.stockBy[st]||(S.stockBy[st]={});
+const CK=(st=curStore())=>S.checkedBy[st]||'';
+/* 店舗ごとの初期の取り扱い：No.34・35はビックカメラ池袋本・札幌東急、No.36は指定ロフト5店、スウェット・パジャマはハンズ町田以外 */
+function defaultOn(n,st){
+ if(n===34||n===35)return ['ビックカメラ池袋本','ビックカメラ札幌東急'].includes(st);
+ if(n===36)return ['ロフト渋谷','ロフト吉祥寺','横浜ロフト','ロフト千葉','池袋ロフト'].includes(st);
+ if(n>=25&&n<=32)return st!=='ハンズ町田';
+ return true;
+}
+function prodCfg(n,st=curStore()){const c=(S.storeProd[st]||{})[n]||{},d=DEF[n]||{s:[],c:[]};return {active:c.active??defaultOn(n,st),price:c.price??(d.price||''),sizes:c.sizes??d.s,colors:c.colors??d.c}}
 const dims=n=>{const c=prodCfg(n);return {sz:c.sizes.length?c.sizes:[''],cl:c.colors.length?c.colors:[''],has:c.sizes.length||c.colors.length}};
 const activeProducts=()=>PRODUCTS.filter(p=>prodCfg(p.n).active);
 function getDay(iso=ui.date){return S.days[iso]||newDay()}
@@ -453,7 +495,7 @@ function stats(d){
 function stockLists(){
  const out=[],low=[];let nOut=0,nLow=0;
  activeProducts().forEach(p=>{const {sz,cl}=dims(p.n),o=[],l=[];
-  cl.forEach(co=>sz.forEach(s=>{const v=S.stock[sk(p.n,s,co)],nm=vlabel(co,s);if(v==='out'){o.push(nm);nOut++}else if(v==='low'){l.push(nm);nLow++}}));
+  cl.forEach(co=>sz.forEach(s=>{const v=ST()[sk(p.n,s,co)],nm=vlabel(co,s);if(v==='out'){o.push(nm);nOut++}else if(v==='low'){l.push(nm);nLow++}}));
   const f=a=>p.name+(a.some(Boolean)?`（${a.join('・')}）`:'');if(o.length)out.push(f(o));if(l.length)low.push(f(l))});
  return {out,low,nOut,nLow};
 }
@@ -539,11 +581,9 @@ function reportText(iso){
 /* ===== 描画 ===== */
 function render(enter=false){
  $('#dateInput').value=ui.date;
- $('#storeName').textContent=dayInfo(getDay()).store||'';
  const ti=TABS.indexOf(ui.tab);
- $$('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false'));
- $('#pill').style.transform=`translateX(${Math.max(ti,0)*100}%)`;$('#pill').style.opacity=ti<0?0:1;
- $('#setBtn').setAttribute('aria-pressed',ui.tab==='set');
+ $$('.dr-item').forEach((b,i)=>{b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false');b.style.setProperty('--i',i)});
+ $('#storeName').innerHTML=`${esc(dayInfo(getDay()).store||'')}　<b>${PAGE[ui.tab]}</b>`;
  const f={rec:renderRec,stock:renderStock,report:renderReport,stats:renderStats,set:renderSettings}[ui.tab];
  const m=$('#main');m.innerHTML=topBanners()+f();
  m.classList.toggle('enter',enter&&!reduced());
@@ -583,7 +623,7 @@ function renderStart(d){
   <span class="muted small">前回の内容が入っています。変わらなければそのまま業務開始を押してください。</span>
  </div></div>
  <button class="btn primary big block" data-act="startDay" ${ok?'':'disabled'}>業務開始</button>
- ${S.stockChecked!==ui.date?`<p class="muted small" style="margin:0;text-align:center">開始後、欠品タブで出勤時の欠品チェックをしてください。</p>`:''}`;
+ ${CK()!==ui.date?`<p class="muted small" style="margin:0;text-align:center">開始後、欠品タブで出勤時の欠品チェックをしてください。</p>`:''}`;
 }
 function renderRec(){
  const d=getDay();
@@ -591,7 +631,7 @@ function renderRec(){
  const ctr=COUNTERS.map(c=>`<div class="ctr"><button class="tap" data-act="inc" data-k="${c.k}" aria-label="${c.label}を1増やす"><span class="lbl">${c.label}</span><span class="note">${c.note}</span><span class="num" data-num="${c.k}">${d.c[c.k]}</span></button><button class="minus" data-act="dec" data-k="${c.k}" aria-label="${c.label}を1減らす">−1</button></div>`).join('');
  const log=[...d.sales.map(s=>({...s,kind:'sale'})),...d.lost.map(l=>({...l,kind:'lost'}))].sort((a,b)=>a.t<b.t?1:-1);
  return `
- ${!d.closed&&S.stockChecked!==ui.date?`<div class="banner warn" style="flex-direction:row;align-items:center;justify-content:space-between"><span>今日の欠品チェックがまだです</span><button class="btn sm" data-act="tab" data-tab="stock">チェックする</button></div>`:''}
+ ${!d.closed&&CK()!==ui.date?`<div class="banner warn" style="flex-direction:row;align-items:center;justify-content:space-between"><span>今日の欠品チェックがまだです</span><button class="btn sm" data-act="tab" data-tab="stock">チェックする</button></div>`:''}
  ${d.closed?`<div class="banner closed"><div><b>業務終了済み</b>　${esc(d.closed)}</div><button class="btn sm" data-act="reopen">記録を再開</button></div>`:''}
  <div class="sec ${d.closed?'locked':''}"><div class="sec-head"><h2>${md(ui.date)}　接客カウンター</h2><span class="muted small">タップで＋1</span></div><div class="ctr-grid">${ctr}</div>
   <div class="mini-row">
@@ -618,7 +658,7 @@ function logItem(x){
 }
 
 function stockBanner(){const {out,low,nOut,nLow}=stockLists();return `<div class="banner ${out.length?'alert':low.length?'warn':'info'}" id="stockSum">
-  <div><b>欠品 ${nOut}件・残りわずか ${nLow}件</b>　<span class="muted">最終チェック：${S.stockChecked?md(S.stockChecked):'まだありません'}</span></div>
+  <div><b>欠品 ${nOut}件・残りわずか ${nLow}件</b>　<span class="muted">${esc(curStore())}・最終チェック：${CK()?md(CK()):'まだありません'}</span></div>
   ${out.length?`<div>欠品：${esc(out.join('、'))}</div>`:''}${low.length?`<div>残りわずか：${esc(low.join('、'))}</div>`:''}</div>`}
 function renderStock(){
  const rows=GROUPS.map(g=>{
@@ -634,7 +674,7 @@ function renderStock(){
 const SYM={ok:'○',low:'△',out:'×'};
 function stockCard(p){
  const {sz,cl}=dims(p.n);let o=0,l=0;
- const body=cl.map(co=>`<tr><th>${esc(co||'在庫')}</th>${sz.map(s=>{const v=S.stock[sk(p.n,s,co)]||'ok';if(v==='out')o++;if(v==='low')l++;
+ const body=cl.map(co=>`<tr><th>${esc(co||'在庫')}</th>${sz.map(s=>{const v=ST()[sk(p.n,s,co)]||'ok';if(v==='out')o++;if(v==='low')l++;
   return `<td><button class="cell st-${v}" data-act="cell" data-k="${esc(sk(p.n,s,co))}" aria-label="${esc(vlabel(co,s)||p.name)}：${{ok:'あり',low:'少',out:'なし'}[v]}">${SYM[v]}</button></td>`}).join('')}</tr>`).join('');
  return `<div class="scard" data-card="${p.n}"><div class="scard-head"><b>${esc(p.name)}</b><span class="tags">${o?`<span class="tag acc">なし ${o}</span>`:''}${l?`<span class="tag warn">少 ${l}</span>`:''}${o||l?`<button class="linkbtn" data-act="cardReset" data-n="${p.n}">すべてありに戻す</button>`:'<span class="tag ok">すべてあり</span>'}</span></div>
   <div class="mxwrap"><table class="mx"><thead><tr><th></th>${sz.map(s=>`<th>${esc(s||'—')}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div></div>`;
@@ -668,7 +708,7 @@ function renderReport(){
   <span class="muted small">日報フォームを開いた状態で、これをClaudeに貼り付けます。68項目を番号付きで並べています。</span>
   <pre class="out" id="outChrome">${esc(chromeText(ui.date))}</pre></div>`;
 }
-function refreshOutputs(){const a=$('#outChrome');if(a)a.textContent=chromeText(ui.date)}
+let outT;function refreshOutputs(){clearTimeout(outT);outT=setTimeout(()=>{const a=$('#outChrome');if(a)a.textContent=chromeText(ui.date)},500)}
 
 function periodDays(){
  let keys=Object.keys(S.days).filter(k=>hasActivity(S.days[k])).sort();
@@ -724,7 +764,8 @@ function renderStats(){
 
 function renderSettings(){
  const s=S.settings;
- const prow=p=>{const c=prodCfg(p.n);return `<div class="prow"><input type="checkbox" id="pa${p.n}" data-bind="pactive" data-n="${p.n}" ${c.active?'checked':''} aria-label="${esc(p.name)}を表示"><label class="nm" for="pa${p.n}">${esc(p.name)}<small>No.${p.n} ${esc(p.label)}</small></label>
+ const cs=cfgStore(),others=Object.keys(S.storeProd).filter(x=>x!==cs&&Object.keys(S.storeProd[x]).length);
+ const prow=p=>{const c=prodCfg(p.n,cs);return `<div class="prow"><input type="checkbox" id="pa${p.n}" data-bind="pactive" data-n="${p.n}" ${c.active?'checked':''} aria-label="${esc(p.name)}を表示"><label class="nm" for="pa${p.n}">${esc(p.name)}<small>No.${p.n} ${esc(p.label)}</small></label>
   <div class="opts"><input type="number" inputmode="numeric" placeholder="単価（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="単価"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
  return `
  <div class="sec"><h2>報告者・店舗の初期値</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
@@ -734,8 +775,13 @@ function renderSettings(){
   <span class="muted small">業務開始の画面に入る初期値です。その日の内容は業務開始の画面で変えられます。</span>
  </div></div>
  <div class="sec"><h2>画面の明るさ</h2><div class="seg">${[['light','ライト'],['dark','ダーク'],['auto','端末に合わせる']].map(([k,l])=>`<button data-act="theme" data-v="${k}" aria-pressed="${(s.theme||'light')===k}">${l}</button>`).join('')}</div></div>
- <div class="sec"><div class="sec-head"><h2>この店舗の取り扱い商品</h2></div>
-  <span class="muted small">チェックを外した商品は、販売記録と欠品チェックに出なくなります（日報フォームには0で入ります）。サイズと色はカンマ区切りで編集でき、欠品チェックの表に反映されます。扱っていない色はここで消してください。初期設定はハンズ町田（スウェット・パジャマなし）です。</span>
+ <div class="sec"><div class="sec-head"><h2>出勤場所ごとの取り扱い商品</h2></div>
+  <div class="card" style="display:flex;flex-direction:column;gap:10px">
+   <div class="field"><label for="cfgStore">設定する出勤場所</label><select id="cfgStore" data-bind="cfgStore">${opts(STORES,cs,'選択してください')}</select></div>
+   ${others.length?`<div class="field"><label for="copyFrom">ほかの出勤場所の設定をコピー</label><div style="display:flex;gap:8px"><select id="copyFrom" style="flex:1">${opts(others,'','コピー元を選択')}</select><button class="btn sm" data-act="copyCfg">この場所にコピー</button></div></div>`:''}
+   <span class="muted small">出勤場所ごとに保存されるので、一度設定すれば次からはそのまま使えます。欠品の状態も出勤場所ごとに分かれます。業務開始で選んだ出勤場所の設定が使われます。</span>
+  </div>
+  <span class="muted small">チェックを外した商品は、販売記録と欠品チェックに出なくなります（日報フォームには0で入ります）。サイズと色はカンマ区切りで編集できます。</span>
   ${GROUPS.map(g=>`<div class="grp"><h3>${g}</h3>${PRODUCTS.filter(p=>p.g===g).map(prow).join('')}</div>`).join('')}
  </div>
  <div class="sec"><h2>バックアップ</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
@@ -874,6 +920,10 @@ async function copyText(t){
 }
 function locked(){if(getDay().closed){toast('業務終了済みです。「記録を再開」で編集できます');return true}return false}
 
+/* ===== メニュー ===== */
+function openMenu(){const d=$('#drawer');d.hidden=false;$('#menuBtn').setAttribute('aria-expanded','true');requestAnimationFrame(()=>requestAnimationFrame(()=>d.classList.add('show')))}
+function closeMenu(){const d=$('#drawer');if(d.hidden)return;d.classList.remove('show');$('#menuBtn').setAttribute('aria-expanded','false');setTimeout(()=>{if(!d.classList.contains('show'))d.hidden=true},reduced()?0:380)}
+
 /* ===== 操作 ===== */
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]');
@@ -881,7 +931,9 @@ document.addEventListener('click',e=>{
  const a=b.dataset.act,sh=ui.sheet,D=sh&&sh.data;
  if(a!=='wipe'&&a!=='delEntry')ui.confirm=null;
  switch(a){
-  case 'tab':{const next=ui.tab==='set'&&b.dataset.tab==='set'?'rec':b.dataset.tab;ui.tab=next;render(true);window.scrollTo({top:0,behavior:reduced()?'auto':'smooth'});break}
+  case 'openMenu':openMenu();break;
+  case 'closeMenu':closeMenu();break;
+  case 'tab':{closeMenu();ui.cfgStore=null;ui.tab=b.dataset.tab;render(true);window.scrollTo({top:0,behavior:reduced()?'auto':'smooth'});break}
   case 'crowd':{const d=editDay();d.crowd=d.crowd===b.dataset.v?'':b.dataset.v;save();buzz();if(ui.missing)ui.missing=ui.missing.filter(x=>x!=='crowd');if(sh)renderSheet();else render();break}
   case 'inc':if(locked())break;editDay().c[b.dataset.k]++;save();buzz();if(b.classList.contains('tap'))ripple(b,e);bumpCounter(b.dataset.k,'+1');break;
   case 'inc10':if(locked())break;editDay().c[b.dataset.k]+=10;save();buzz();bumpCounter(b.dataset.k,'+10');break;
@@ -906,31 +958,32 @@ document.addEventListener('click',e=>{
   case 'rchip':D.reason=D.reason?D.reason+'、'+b.dataset.v:b.dataset.v;renderSheet();break;
   case 'saveSale':{const d=editDay(),rec={...D,id:sh.id||uid()};const outs=rec.items.filter(i=>i.out);rec.items=rec.items.map(({out,os,oc,...r})=>r);
    if(sh.id){d.sales[d.sales.findIndex(x=>x.id===sh.id)]=rec}else d.sales.push(rec);
-   let done=0,skip=0;outs.forEach(i=>{const c=prodCfg(i.p);if((c.sizes.length&&!i.os)||(c.colors.length&&!i.oc)){skip++;return}S.stock[sk(i.p,i.os||'',i.oc||'')]='out';done++});
+   let done=0,skip=0;outs.forEach(i=>{const c=prodCfg(i.p);if((c.sizes.length&&!i.os)||(c.colors.length&&!i.oc)){skip++;return}ST()[sk(i.p,i.os||'',i.oc||'')]='out';done++});
    save();buzz(20);closeSheet();ui.flash=rec.id;render();toast(skip?`保存しました。サイズ・色が未選択の${skip}件は欠品に反映していません`:done?'保存し、欠品に反映しました':'販売を保存しました');break}
   case 'lCat':D.cat=b.dataset.v;D.p='';D.v='';D.co='';D.sz='';renderSheet();break;
   case 'lReason':{const i=D.reasons.indexOf(b.dataset.v);i>=0?D.reasons.splice(i,1):D.reasons.push(b.dataset.v);renderSheet();break}
   case 'saveLost':{const d=editDay(),rec={...D,id:sh.id||uid()};if(sh.id){d.lost[d.lost.findIndex(x=>x.id===sh.id)]=rec}else d.lost.push(rec);save();closeSheet();ui.flash=rec.id;render();toast('保存しました');break}
   case 'delEntry':{if(ui.confirm!=='del'){ui.confirm='del';renderSheet();break}const d=editDay(),k=sh.type==='sale'?'sales':'lost';d[k]=d[k].filter(x=>x.id!==sh.id);save();closeSheet();render();toast('削除しました');break}
-  case 'cell':{const k=b.dataset.k,cur=S.stock[k]||'ok',nx={ok:'low',low:'out',out:'ok'}[cur];if(nx==='ok')delete S.stock[k];else S.stock[k]=nx;save();buzz();
+  case 'cell':{const k=b.dataset.k,cur=ST()[k]||'ok',nx={ok:'low',low:'out',out:'ok'}[cur];if(nx==='ok')delete ST()[k];else ST()[k]=nx;save();buzz();
    const n=+k.split('|')[0],card=b.closest('.scard');card.outerHTML=stockCard(PMAP[n]);const nb=$(`.scard[data-card="${n}"] [data-k="${CSS.escape(k)}"]`);if(nb&&!reduced())nb.classList.add('pop');
    $('#stockSum').outerHTML=stockBanner();break}
-  case 'cardReset':{const n=b.dataset.n;Object.keys(S.stock).forEach(k=>{if(k.split('|')[0]===n)delete S.stock[k]});save();buzz();$(`.scard[data-card="${n}"]`).outerHTML=stockCard(PMAP[n]);$('#stockSum').outerHTML=stockBanner();break}
-  case 'stockDone':S.stockChecked=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
+  case 'cardReset':{const n=b.dataset.n;Object.keys(ST()).forEach(k=>{if(k.split('|')[0]===n)delete ST()[k]});save();buzz();$(`.scard[data-card="${n}"]`).outerHTML=stockCard(PMAP[n]);$('#stockSum').outerHTML=stockBanner();break}
+  case 'stockDone':S.checkedBy[curStore()]=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
   case 'copy':copyText(chromeText(ui.date));break;
   case 'startDay':{const f=ui.start;if(!(f&&f.reporter&&f.brand&&f.store))break;const d=editDay();Object.assign(d,{reporter:f.reporter.trim(),brand:f.brand,store:f.store,started:nowHM()});
    Object.assign(S.settings,{reporter:d.reporter,brand:d.brand,store:d.store});save();buzz(30);ui.start=null;render(true);toast('業務を開始しました');break}
+  case 'copyCfg':{const from=$('#copyFrom').value;if(!from){toast('コピー元を選んでください');break}   S.storeProd[cfgStore()]=Object.fromEntries(PRODUCTS.map(x=>[x.n,JSON.parse(JSON.stringify(prodCfg(x.n,from)))]));save();ui.confirm=null;render();toast(`${from}の設定をコピーしました`);break}
   case 'theme':S.settings.theme=b.dataset.v;save();applyTheme();render();break;
   case 'period':ui.period=b.dataset.v;render(true);break;
   case 'goDay':ui.date=b.dataset.k;ui.tab='rec';render(true);window.scrollTo(0,0);break;
   case 'backup':copyText(JSON.stringify(S));break;
-  case 'restore':{const v=$('#restoreTa').value.trim();try{const o=JSON.parse(v);if(!o||!o.days||!o.settings)throw 0;S=o;save();render(true);toast('バックアップから戻しました')}catch(_){toast('読み込めませんでした。コピーした内容をそのまま貼り付けてください')}break}
-  case 'wipe':if(ui.confirm!=='wipe'){ui.confirm='wipe';render();break}S=blank();save();ui.confirm=null;ui.date=today();render(true);toast('すべての記録を消去しました');break;
-  case 'clearSample':S=blank();save();ui.date=today();ui.tab='set';render(true);toast('サンプルを消しました。まず報告者名を入力してください');break;
+  case 'restore':{const v=$('#restoreTa').value.trim();try{const o=JSON.parse(v);if(!o||!o.days||!o.settings)throw 0;S=o;normalize();save();render(true);toast('バックアップから戻しました')}catch(_){toast('読み込めませんでした。コピーした内容をそのまま貼り付けてください')}break}
+  case 'wipe':if(ui.confirm!=='wipe'){ui.confirm='wipe';render();break}S=blank();normalize();save();ui.confirm=null;ui.date=today();render(true);toast('すべての記録を消去しました');break;
+  case 'clearSample':S=blank();normalize();save();ui.date=today();ui.tab='set';render(true);toast('サンプルを消しました。まず報告者名を入力してください');break;
  }
 });
-document.addEventListener('input',e=>{
+function onInput(e){
  const el=e.target,bd=el.dataset.bind;if(!bd)return;
  const D=ui.sheet&&ui.sheet.data;
  switch(bd){
@@ -939,10 +992,14 @@ document.addEventListener('input',e=>{
   case 'wrap':case 'flyerLeft':{editDay()[bd]=el.value;save();refreshOutputs();el.closest('.field')?.classList.remove('missing');break}
   case 'set':S.settings[el.dataset.k]=el.value;save();break;
   case 'st':{ui.start[el.dataset.k]=el.value;const btn=$('[data-act=startDay]');if(btn){const f=ui.start;btn.disabled=!(f.reporter&&f.brand&&f.store)}break}
-  case 'pprice':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).price=el.value;save();break;
-  case 'plist':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{})[el.dataset.f]=el.value.split(/[,、，]/).map(x=>x.trim()).filter(Boolean);save();break;
+  case 'pprice':(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{}).price=el.value;save();break;
+  case 'plist':(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{})[el.dataset.f]=el.value.split(/[,、，]/).map(x=>x.trim()).filter(Boolean);save();break;
  }
-});
+}
+document.addEventListener('input',e=>{if(e.isComposing||composing)return;onInput(e)});
+let composing=false;
+document.addEventListener('compositionstart',()=>{composing=true});
+document.addEventListener('compositionend',e=>{composing=false;onInput(e)});
 document.addEventListener('change',e=>{
  const el=e.target,bd=el.dataset.bind;if(!bd)return;
  const D=ui.sheet&&ui.sheet.data;
@@ -955,11 +1012,12 @@ document.addEventListener('change',e=>{
  if(bd==='stDate'&&el.value){ui.date=el.value;ui.start=null;render(true)}
  if(bd==='setBrand'){S.settings.brand=el.value;if(!storesOf(el.value).includes(S.settings.store))S.settings.store='';save();render()}
  if(bd==='setStore'){S.settings.store=el.value;save()}
- if(bd==='pactive'){(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).active=el.checked;save()}
+ if(bd==='cfgStore'&&el.value){ui.cfgStore=el.value;render(true)}
+ if(bd==='pactive'){(PC(cfgStore())[el.dataset.n]=PC(cfgStore())[el.dataset.n]||{}).active=el.checked;save()}
  if((bd==='wrap'||bd==='flyerLeft')&&ui.tab==='report'&&!ui.sheet){const w=$('#main .banner.warn, #main .banner.info');if(w){const tmp=document.createElement('div');tmp.innerHTML=renderReport();w.replaceWith(tmp.firstElementChild)}}
 });
 $('#dateInput').addEventListener('change',e=>{if(e.target.value){ui.date=e.target.value;ui.start=null;render(true)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMenu();if(ui.sheet)closeSheet()}});
 
 render(true);
 if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
