@@ -10,6 +10,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="ReD記録">
+<script>try{var t=(JSON.parse(localStorage.getItem("red-hanbai-v1")||"{}").settings||{}).theme||"light";if(t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","light")}</script>
+<meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/favicon.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -404,7 +406,7 @@ const reduced=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce
 
 /* ===== 保存 ===== */
 let storageOK=true;
-function blank(){return {v:1,sample:false,settings:{reporter:'',brand:'ハンズ',store:'ハンズ町田',prod:{}},days:{},stock:{},stockChecked:''}}
+function blank(){return {v:1,sample:false,settings:{reporter:'',brand:'ハンズ',store:'ハンズ町田',theme:'light',prod:{}},days:{},stock:{},stockChecked:''}}
 function newDay(){return {crowd:'',c:{voice:0,serve:0,demo:0,sample:0,guide:0,flyer:0},sales:[],lost:[],wrap:'',flyerLeft:'',txt:{},closed:''}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){storageOK=false;return null}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
@@ -412,6 +414,8 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}c
 let S=load();
 if(!S){S=blank();save()}
 S.settings.prod=S.settings.prod||{};
+function applyTheme(){const t=S.settings.theme||'light';if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t)}
+applyTheme();
 const ui={tab:'rec',date:today(),sheet:null,period:'all',confirm:null,flash:null};
 
 /* ===== データ参照 ===== */
@@ -703,6 +707,7 @@ function renderSettings(){
   <div class="field"><label for="sStore">4. 入店舗名</label><input id="sStore" data-bind="set" data-k="store" value="${esc(s.store)}"></div></div>
   <span class="muted small">屋号・店舗名はフォームの選択肢と同じ表記にしてください。</span>
  </div></div>
+ <div class="sec"><h2>画面の明るさ</h2><div class="seg">${[['light','ライト'],['dark','ダーク'],['auto','端末に合わせる']].map(([k,l])=>`<button data-act="theme" data-v="${k}" aria-pressed="${(s.theme||'light')===k}">${l}</button>`).join('')}</div></div>
  <div class="sec"><div class="sec-head"><h2>この店舗の取り扱い商品</h2></div>
   <span class="muted small">チェックを外した商品は、販売記録と欠品チェックに出なくなります（日報フォームには0で入ります）。サイズと色はカンマ区切りで編集でき、欠品チェックの表に反映されます。扱っていない色はここで消してください。初期設定はハンズ町田（スウェット・パジャマなし）です。</span>
   ${GROUPS.map(g=>`<div class="grp"><h3>${g}</h3>${PRODUCTS.filter(p=>p.g===g).map(prow).join('')}</div>`).join('')}
@@ -888,6 +893,7 @@ document.addEventListener('click',e=>{
   case 'stockDone':S.stockChecked=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
   case 'copy':copyText(chromeText(ui.date));break;
+  case 'theme':S.settings.theme=b.dataset.v;save();applyTheme();render();break;
   case 'period':ui.period=b.dataset.v;render(true);break;
   case 'goDay':ui.date=b.dataset.k;ui.tab='rec';render(true);window.scrollTo(0,0);break;
   case 'backup':copyText(JSON.stringify(S));break;
