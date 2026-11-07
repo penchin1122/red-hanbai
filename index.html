@@ -573,14 +573,15 @@ function warnings(iso){
  if(st.unknown)w.push(`年代・性別が未入力の購入が${st.unknown}件あります（37〜48の合計が購入人数と合いません）`);
  return w;
 }
-function chromeText(iso){
+function chromeText(iso,ai=false){
  const head=['ReD 日報報告（Microsoft Forms）のフォームに、以下の内容を入力してください。',
  '・行頭の番号はフォームの質問番号です。',
  '・3〜5は選択肢から同じものを選んでください。2の報告日は yyyy/MM/dd 形式です。',
  '・数値の項目は半角数字で入力し、0もそのまま入力してください。',
  '・「（空欄）」の項目は任意項目なので、何も入力しないでください。',
  '・すべて入力したら送信ボタンは押さずに止め、入力内容を確認させてください。'];
- return head.join('\n')+'\n\n'+formRows(iso).map(([n,l,v])=>`${n}. ${l}：${v===''||v==null?'（空欄）':v}`).join('\n');
+ const body=formRows(iso).map(([n,l,v])=>`${n}. ${l}：${v===''||v==null?'（空欄）':v}`).join('\n');
+ return ai?head.join('\n')+'\n\n'+body:`【日報まとめ】${md(iso)}\n\n`+body;
 }
 function reportText(iso){
  const d=getDay(iso),st=stats(d),s=S.settings,{out,low}=stockLists();
@@ -749,9 +750,10 @@ function renderReport(){
   ${ta(60,'インナー購入に至らなかった理由')}${ta(61,'スリープ購入に至らなかった理由')}${ta(62,'靴下購入に至らなかった理由')}
   ${ta(63,'スタッフの声（要望や伝えたいこと）','ReD事務局に伝えたいこと')}${ta(64,'店舗からの声','店舗担当者から要望があった場合')}
  </div></details>
- <div class="card out-card"><div class="head"><b>Claude in Chrome に渡す</b><button class="btn sm primary" data-act="copy" data-what="chrome">コピー</button></div>
-  <span class="muted small">日報フォームを開いた状態で、これをClaudeに貼り付けます。68項目を番号付きで並べています。</span>
-  <pre class="out" id="outChrome">${esc(chromeText(ui.date))}</pre></div>`;
+ <div class="card out-card"><div class="head"><b>日報まとめ</b><button class="btn sm primary" data-act="copy" data-what="plain">コピー</button></div>
+  <span class="muted small">日報フォームの質問番号順に、入力する内容を並べています。フォームを見ながらこの通りに入力してください。</span>
+  <pre class="out" id="outChrome">${esc(chromeText(ui.date))}</pre>
+  <button class="linkbtn" data-act="copy" data-what="ai" style="align-self:flex-start">AI（Claude in Chromeなど）に入力を頼む用にコピー</button></div>`;
 }
 let outT;function refreshOutputs(){clearTimeout(outT);outT=setTimeout(()=>{const a=$('#outChrome');if(a)a.textContent=chromeText(ui.date)},500)}
 
@@ -941,7 +943,8 @@ function doneBody(){
    <div class="kpi"><span>販売</span><b data-count="${st.items}" data-suf="点">${st.items}点</b></div>
   </div>
   <div class="acts">
-   <button class="btn primary" data-act="copy" data-what="chrome">Claude in Chrome 用をコピー</button>
+   <button class="btn primary" data-act="copy" data-what="plain">日報まとめをコピー</button>
+   <button class="btn" data-act="copy" data-what="ai">AIに入力を頼む用にコピー</button>
    <button class="btn" data-act="toReport">日報画面で確認する</button>
   </div>
  </div></div>`;
@@ -1016,7 +1019,7 @@ document.addEventListener('click',e=>{
   case 'cardReset':{const n=b.dataset.n;Object.keys(ST()).forEach(k=>{if(k.split('|')[0]===n)delete ST()[k]});save();buzz();$(`.scard[data-card="${n}"]`).outerHTML=stockCard(PMAP[n]);$('#stockSum').outerHTML=stockBanner();break}
   case 'stockDone':S.checkedBy[curStore()]=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
-  case 'copy':copyText(chromeText(ui.date));break;
+  case 'copy':copyText(chromeText(ui.date,b.dataset.what==='ai'));break;
   case 'editName':ui.editName=true;ui.nameDraft=S.settings.reporter;closeMenu();ui.tab='rec';render(true);break;
   case 'saveName':{const v=(ui.nameDraft??'').trim().replace(/\s+/g,' ');if(!v)break;S.settings.reporter=v;const d=S.days[ui.date];if(d&&!d.closed&&d.started)d.reporter=v;save();ui.editName=false;ui.nameDraft=null;if(ui.start)ui.start.reporter=v;buzz(30);render(true);updateMenuUser();toast(`${v}さんで登録しました`);break}
   case 'startDay':{const f=ui.start;if(!(f&&f.reporter&&f.brand&&f.store))break;const d=editDay();Object.assign(d,{reporter:f.reporter.trim(),brand:f.brand,store:f.store,started:nowHM()});
