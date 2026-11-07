@@ -435,6 +435,7 @@ const COUNTERS=[
  {k:'sample',label:'サンプル体験',note:'お客様が自分で手に取った'},
 ];
 const TABS=['rec','stock','report','stats'];
+const FORM_URL='https://forms.cloud.microsoft/pages/responsepage.aspx?id=pgO5cVCkkkucvhLFNNcjg2PeQ5uVMuVCg-fxFZejG61UNVVGSjdQSDFWQk4zSDlMSzRWS09TUFBPUS4u&route=shorturl';
 const NEED_START=['stock','report'];
 const PAGE={rec:'記録',stock:'欠品チェック',report:'日報',stats:'分析',set:'設定'};
 /* 日報フォームの選択肢（3. 屋号 / 4. 入店舗名）と同じ表記 */
@@ -575,6 +576,8 @@ function warnings(iso){
 }
 function chromeText(iso,ai=false){
  const head=['ReD 日報報告（Microsoft Forms）のフォームに、以下の内容を入力してください。',
+ `・フォームはこちらです：${FORM_URL}`,
+ '　ブラウザでこのURLを開いてから入力を始めてください。',
  '・行頭の番号はフォームの質問番号です。',
  '・3〜5は選択肢から同じものを選んでください。2の報告日は yyyy/MM/dd 形式です。',
  '・数値の項目は半角数字で入力し、0もそのまま入力してください。',
