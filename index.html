@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ReD 販売記録</title>
+<meta name="description" content="ReD販売員用の販売記録・欠品チェック・日報作成アプリ">
+<meta name="theme-color" content="#c8161d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ReD記録">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
+<style>
+/* 片手操作のスマホ用ツール。上に日付バー、中央に1画面分の作業、下に固定タブ。赤＝操作と注意、墨色＝選択状態。 */
+:root{
+  --bg:#f7f4f4; --surface:#ffffff; --surface-2:#f1eded; --fg:#1d1b1c; --muted:#6b6467; --line:#e3dcdc;
+  --accent:#c8161d; --accent-fg:#ffffff; --accent-soft:#fdeceb; --accent-deep:#9e1015;
+  --ink:#26232a; --ink-fg:#ffffff;
+  --ok:#1b7a45; --ok-soft:#e4f3ea; --warn:#9a5c00; --warn-soft:#fdf1dc;
+  --shadow:0 1px 2px rgba(60,20,20,.06),0 4px 14px rgba(60,20,20,.06);
+  --font:"Noto Sans JP","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141213; --surface:#1e1a1b; --surface-2:#282324; --fg:#efeaea; --muted:#aba2a4; --line:#3a3334;
+  --accent:#ff5a55; --accent-fg:#2a0607; --accent-soft:#3b1716; --accent-deep:#ff8a85;
+  --ink:#ece7e8; --ink-fg:#18151a;
+  --ok:#62cc8f; --ok-soft:#163324; --warn:#f2b456; --warn-soft:#3a2b12;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141213; --surface:#1e1a1b; --surface-2:#282324; --fg:#efeaea; --muted:#aba2a4; --line:#3a3334;
+  --accent:#ff5a55; --accent-fg:#2a0607; --accent-soft:#3b1716; --accent-deep:#ff8a85;
+  --ink:#ece7e8; --ink-fg:#18151a;
+  --ok:#62cc8f; --ok-soft:#163324; --warn:#f2b456; --warn-soft:#3a2b12;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 14px rgba(0,0,0,.25); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px)}
+body{margin:0}
+img{max-width:100%}
+html,body{background:var(--bg)}
+body{color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform-origin:left;animation:grow .9s var(--ease) both}
+header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
+.brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.mark{font-weight:900;font-size:22px;letter-spacing:-.02em;color:var(--accent);line-height:1}
+.brand span:last-child{display:flex;flex-direction:column;line-height:1.25}
+.brand b{font-size:13px}
+.brand small{font-size:11px;color:var(--muted)}
+.datebox{margin-left:auto;display:flex;align-items:center;gap:6px}
+.datebox input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;font-size:14px;min-width:0;width:140px}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;font-size:13px;white-space:nowrap;transition:background .2s,border-color .2s,transform .12s}
+.iconbtn:active{transform:scale(.95)}
+.iconbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
+
+main{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+main .wrap{display:flex;flex-direction:column;gap:14px;padding-block:14px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .wrap{position:relative;display:grid;grid-template-columns:repeat(4,1fr);padding-block:6px}
+nav.tabs .pill{position:absolute;top:6px;bottom:6px;left:max(16px,env(safe-area-inset-left,0px));width:calc((100% - max(16px,env(safe-area-inset-left,0px)) - max(16px,env(safe-area-inset-right,0px)))/4);background:var(--accent-soft);border-radius:10px;transition:transform .45s var(--spring),opacity .2s}
+nav.tabs button{position:relative;border:0;background:none;border-radius:10px;padding:9px 0;font-size:13px;color:var(--muted);font-weight:500;transition:color .25s}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:700}
+
+h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin:0}
+.sec{display:flex;flex-direction:column;gap:8px}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;box-shadow:var(--shadow)}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:1px;letter-spacing:.04em}
+.badge.req{background:var(--accent);color:var(--accent-fg)}
+.badge.opt{background:var(--surface-2);color:var(--muted)}
+
+/* 入場アニメーション：タブ・日付を切り替えたときだけ */
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes bump{0%{transform:scale(1)}35%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes floatUp{0%{opacity:0;transform:translate(-50%,0) scale(.7)}20%{opacity:1;transform:translate(-50%,-10px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-46px) scale(1)}}
+@keyframes ripple{from{transform:translate(-50%,-50%) scale(0);opacity:.35}to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+@keyframes flash{0%,30%{background:var(--accent-soft);border-color:var(--accent)}100%{background:var(--surface)}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06);opacity:1}100%{transform:scale(1)}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,16px) scale(.96)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.enter>*{animation:rise .45s var(--ease) both;animation-delay:calc(var(--i,0)*55ms)}
+
+.banner{border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.banner.info{background:var(--surface);border:1px solid var(--line)}
+.banner.warn{background:var(--warn-soft)}
+.banner.alert{background:var(--accent-soft)}
+.banner.closed{background:var(--ink);color:var(--ink-fg);flex-direction:row;align-items:center;justify-content:space-between}
+.banner.closed .btn{background:transparent;color:var(--ink-fg);border-color:color-mix(in srgb,var(--ink-fg) 40%,transparent)}
+.banner ul{margin:0;padding-left:1.2em}
+
+.seg{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;border-left:1px solid var(--line);background:none;padding:10px 4px;font-size:14px;transition:background .22s var(--ease),color .22s}
+.seg button:first-child{border-left:0}
+.seg button:active{background:var(--surface-2)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--ink-fg);font-weight:700}
+
+.ctr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ctr{position:relative;display:flex;flex-direction:column}
+.ctr .tap{position:relative;overflow:hidden;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:122px;touch-action:manipulation;box-shadow:var(--shadow);transition:transform .15s var(--ease),border-color .2s}
+.ctr .tap:active{transform:scale(.97);border-color:var(--accent)}
+.ctr .lbl{font-weight:700;font-size:15px}
+.ctr .num{font-size:40px;font-weight:900;line-height:1.1;margin-top:auto;color:var(--accent);display:inline-block;transform-origin:left bottom}
+.ctr .num.bump{animation:bump .38s var(--spring)}
+.ctr .note{font-size:11px;color:var(--muted);line-height:1.4;padding-right:30px}
+.ctr .minus{position:absolute;top:8px;right:8px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;font-size:12px;padding:2px 8px;color:var(--muted);transition:transform .12s}
+.ctr .minus:active{transform:scale(.9)}
+.ripple{position:absolute;width:260px;height:260px;border-radius:50%;background:var(--accent);pointer-events:none;animation:ripple .6s ease-out forwards}
+.floater{position:absolute;left:50%;top:40%;font-weight:900;font-size:18px;color:var(--accent);pointer-events:none;animation:floatUp .75s var(--ease) forwards;z-index:2}
+.locked .tap,.locked .stepper button,.actions.locked .btn{opacity:.4;pointer-events:none}
+
+.mini-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.stepper{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px;min-width:0;box-shadow:var(--shadow)}
+.stepper .lbl{font-size:12px;font-weight:700;line-height:1.4}
+.stepper .ctl{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.stepper .ctl b{font-size:22px;min-width:1.8em;text-align:center;display:inline-block}
+.stepper .ctl b.bump{animation:bump .38s var(--spring)}
+.stepper .ctl button{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:4px 6px;font-size:12px;min-width:32px;white-space:nowrap;transition:transform .12s}
+.stepper .ctl button:active{transform:scale(.9)}
+
+.actions{display:grid;grid-template-columns:3fr 2fr;gap:10px}
+.btn{position:relative;overflow:hidden;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;font-weight:700;font-size:15px;transition:transform .15s var(--ease),background .2s,box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);box-shadow:0 6px 16px color-mix(in srgb,var(--accent) 28%,transparent)}
+.btn.ink{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
+.btn.big{padding:18px 12px;font-size:16px}
+.btn.outline-accent{color:var(--accent);border-color:var(--accent);background:var(--surface)}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn.sm{padding:7px 12px;font-size:13px;font-weight:500}
+.btn.block{width:100%}
+.linkbtn{border:0;background:none;color:var(--accent);font-size:12px;padding:0;text-decoration:underline;text-underline-offset:2px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 8px;display:flex;flex-direction:column;gap:2px;min-width:0;box-shadow:var(--shadow)}
+.kpi span{font-size:11px;color:var(--muted)}
+.kpi b{font-size:20px;line-height:1.2;overflow-wrap:anywhere}
+.kpi i{font-style:normal;font-size:11px;color:var(--muted);line-height:1.35}
+
+.log{display:flex;flex-direction:column;gap:6px}
+.log button{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;transition:transform .15s var(--ease)}
+.log button:active{transform:scale(.98)}
+.log button.flash{animation:flash 1.6s var(--ease)}
+.log .t{font-size:12px;color:var(--muted);padding-top:2px}
+.log .body{min-width:0;display:flex;flex-direction:column;gap:4px}
+.log .ttl{font-weight:500;overflow-wrap:anywhere}
+.tags{display:flex;flex-wrap:wrap;gap:4px}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.acc{background:var(--accent);color:var(--accent-fg)}
+.tag.ink{background:var(--ink);color:var(--ink-fg)}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:16px;text-align:center;color:var(--muted);font-size:13px}
+
+/* 欠品 */
+.grp{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.grp h3{margin:0;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;padding:8px 12px;background:var(--surface-2)}
+.srow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);transition:background .3s}
+.srow:first-of-type{border-top:0}
+.srow.is-out{background:var(--accent-soft)}
+.srow.is-low{background:var(--warn-soft)}
+.srow .nm{min-width:0;overflow-wrap:anywhere;font-size:14px}
+.srow .nm small{color:var(--muted);margin-left:4px}
+.srow.sub .nm{padding-left:14px;font-size:13px}
+.tri{display:grid;grid-template-columns:repeat(3,auto);border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.tri button{border:0;border-left:1px solid var(--line);background:none;font-size:12px;padding:6px 11px;transition:background .25s var(--ease),color .25s}
+.tri button:first-child{border-left:0}
+.tri button[aria-pressed="true"][data-v="ok"]{background:var(--ok);color:#fff;font-weight:700}
+.tri button[aria-pressed="true"][data-v="low"]{background:var(--warn);color:#fff;font-weight:700}
+.tri button[aria-pressed="true"][data-v="out"]{background:var(--accent);color:var(--accent-fg);font-weight:700}
+
+.scard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.scard-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.scard-head b{font-size:14px}
+.mxwrap{overflow-x:auto}
+.mx{border-collapse:separate;border-spacing:4px;width:auto;font-size:12px}
+.mx th,.mx td{border:0;padding:0;text-align:center;white-space:nowrap}
+.mx thead th{background:none;font-size:11px;color:var(--muted);font-weight:700;padding-bottom:2px}
+.mx tbody th{text-align:left;font-weight:500;color:var(--fg);padding-right:6px;font-size:12px}
+.cell{display:inline-grid;place-items:center;width:44px;height:36px;border-radius:8px;border:1px solid var(--line);font-size:15px;font-weight:700;transition:background .25s var(--ease),color .25s,transform .15s var(--spring)}
+.cell:active{transform:scale(.88)}
+.legend .cell{width:22px;height:20px;font-size:11px;border-radius:5px;margin:0 2px;vertical-align:-4px}
+.cell.st-ok{background:var(--surface);color:var(--ok)}
+.cell.st-low{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+.cell.st-out{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.cell.pop{animation:pop .3s var(--spring)}
+.outpick{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;animation:rise .3s var(--ease)}
+/* 日報 */
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:13px;font-weight:700}
+.field .hint{font-size:11px;color:var(--muted)}
+.field input,.field textarea,.field select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;width:100%;min-width:0;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.field textarea{min-height:64px;resize:vertical;line-height:1.5}
+.field.missing input{border-color:var(--accent);animation:shake .35s}
+.field-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.out{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;margin:0;font-family:var(--font);user-select:text;-webkit-user-select:text}
+.out-card{display:flex;flex-direction:column;gap:8px}
+.out-card .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.out-card .head b{font-size:15px}
+details.opt-fields{border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+details.opt-fields summary{padding:12px 14px;font-weight:700;font-size:14px;cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.opt-fields summary::after{content:"＋";color:var(--muted);transition:transform .3s var(--ease)}
+details.opt-fields[open] summary::after{transform:rotate(45deg)}
+details.opt-fields .inner{display:flex;flex-direction:column;gap:12px;padding:0 14px 14px}
+details.opt-fields[open] .inner{animation:rise .35s var(--ease)}
+
+/* 分析 */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;transition:transform .12s,background .2s,color .2s}
+.chip:active{transform:scale(.94)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--ink-fg);border-color:var(--ink);font-weight:700}
+.bars{display:flex;flex-direction:column;gap:6px}
+.bar{display:grid;grid-template-columns:minmax(0,9.5em) 1fr 3.2em;align-items:center;gap:8px;font-size:13px}
+.bar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .track{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.bar .fill{display:block;height:100%;background:var(--accent);border-radius:5px;transform-origin:left;animation:grow .8s var(--ease) both;animation-delay:calc(var(--i,0)*45ms)}
+.bar .fill.ink{background:var(--ink)}
+.bar .v{text-align:right;font-weight:700}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.fstep{display:grid;grid-template-columns:5em 1fr 3.5em;gap:8px;align-items:center;font-size:13px}
+.fstep .track{height:24px;background:var(--surface-2);border-radius:6px;overflow:hidden}
+.fstep .fill{display:block;height:100%;background:var(--accent);border-radius:6px;transform-origin:left;animation:grow .9s var(--ease) both;animation-delay:calc(var(--i,0)*120ms)}
+.fstep .v{text-align:right;font-weight:700}
+.rate{font-size:12px;color:var(--muted);padding-left:5.5em}
+.rate b{color:var(--fg)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 8px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+thead th{border-top:0;font-size:11px;color:var(--muted);font-weight:700;background:var(--surface-2)}
+.heat td{text-align:center;transition:background .4s}
+.heat td.h{font-weight:700}
+
+/* 設定 */
+.prow{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
+.prow:first-of-type{border-top:0}
+.prow .nm{font-size:14px;min-width:0;overflow-wrap:anywhere}
+.prow .nm small{display:block;color:var(--muted);font-size:11px}
+.prow .opts{grid-column:2;display:grid;grid-template-columns:7em 1fr;gap:6px}
+.prow .opts input{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px;font-size:13px;min-width:0;width:100%}
+.prow input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+
+/* シート */
+#sheet{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,8,8,0);transition:background .3s var(--ease)}
+#sheet.show{background:rgba(20,8,8,.48)}
+.panel{background:var(--bg);border-radius:18px 18px 0 0;max-height:92%;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .38s var(--ease);box-shadow:0 -8px 30px rgba(0,0,0,.18)}
+#sheet.show .panel{transform:none}
+.pc{display:contents}
+.panel .grab{width:40px;height:4px;border-radius:2px;background:var(--line);margin:8px auto 0}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);background:var(--surface);border-radius:18px 18px 0 0}
+.panel .ph b{font-size:16px}
+.panel .pb{overflow:auto;padding:14px max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch}
+.panel .pf{display:grid;grid-template-columns:1fr 2fr;gap:10px;padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--surface)}
+.pgrp{display:flex;flex-direction:column;gap:6px}
+.pgrp .gl{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.05em}
+.pchip{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font-size:13px;text-align:left;transition:transform .12s,background .2s,border-color .2s,color .2s}
+.pchip:active{transform:scale(.95)}
+.pchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-deep);font-weight:700}
+.pchip .q{display:inline-block;margin-left:5px;background:var(--accent);color:var(--accent-fg);border-radius:999px;font-size:11px;padding:0 6px;animation:pop .35s var(--spring)}
+.chosen{display:flex;flex-direction:column;gap:6px}
+.citem{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.citem.new{animation:rise .35s var(--ease)}
+.citem .nm{font-weight:500;min-width:0;overflow-wrap:anywhere}
+.citem .qty{display:flex;align-items:center;gap:6px}
+.citem .qty button{border:1px solid var(--line);background:var(--surface-2);border-radius:6px;width:32px;height:30px;transition:transform .12s}
+.citem .qty button:active{transform:scale(.88)}
+.citem .qty b{min-width:1.6em;text-align:center}
+.citem label{grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.citem input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.toggles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.subnote{margin-top:6px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;width:100%;animation:rise .3s var(--ease)}
+.sheet-input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;width:100%;min-height:60px}
+
+/* 業務終了 */
+.done{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding-block:8px}
+.done svg{width:84px;height:84px}
+.done circle{fill:none;stroke:var(--accent);stroke-width:4;stroke-dasharray:240;stroke-dashoffset:240;animation:draw .7s var(--ease) forwards}
+.done path{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .4s .55s var(--ease) forwards}
+.done h3{margin:0;font-size:20px;animation:rise .45s .75s var(--ease) both}
+.done .kpis{width:100%;animation:rise .45s .9s var(--ease) both}
+.done .acts{width:100%;display:flex;flex-direction:column;gap:8px;animation:rise .45s 1.05s var(--ease) both}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--ink-fg);padding:10px 18px;border-radius:999px;font-size:13px;max-width:calc(100% - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:toastIn .35s var(--spring)}
+
+@media (max-width:380px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.ctr .num{font-size:34px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.panel{transform:none}.done circle,.done path{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <div class="brand"><span class="mark">ReD</span><span><b>販売記録</b><small id="storeName">ハンズ町田</small></span></div>
+  <div class="datebox">
+    <input type="date" id="dateInput" aria-label="記録する日">
+    <button class="iconbtn" id="setBtn" data-act="tab" data-tab="set" aria-pressed="false">設定</button>
+  </div>
+</div></header>
+
+<main><div class="wrap" id="main"></div></main>
+
+<nav class="tabs" aria-label="画面"><div class="wrap">
+  <span class="pill" id="pill"></span>
+  <button data-act="tab" data-tab="rec">記録</button>
+  <button data-act="tab" data-tab="stock">欠品</button>
+  <button data-act="tab" data-tab="report">日報</button>
+  <button data-act="tab" data-tab="stats">分析</button>
+</div></nav>
+
+<div id="sheet" hidden></div>
+<div id="toast" hidden></div>
+
+<script>
+/* ===== 商品マスタ（日報フォームの質問番号と同じ） ===== */
+const PRODUCTS=[
+ {n:10,g:'インナー半袖',cat:'inner',name:'インナー半袖(Vネック)',label:'【販売インナー】半袖(Vネック)'},
+ {n:11,g:'インナー半袖',cat:'inner',name:'インナー半袖(Uネック)',label:'【販売インナー】半袖(Uネック)'},
+ {n:12,g:'インナー半袖',cat:'inner',name:'ロングボクサーパンツ',label:'【販売インナー】ロングボクサーパンツ'},
+ {n:13,g:'インナー半袖',cat:'inner',name:'オーバーパンツ',label:'【販売インナー】オーバーパンツ'},
+ {n:14,g:'インナー半袖',cat:'inner',name:'インナー半袖(Vネック)COOL',label:'【販売インナー】半袖(Vネック)COOL'},
+ {n:15,g:'インナー半袖',cat:'inner',name:'インナー半袖(Uネック)COOL',label:'【販売インナー】半袖(Uネック)COOL'},
+ {n:16,g:'インナー半袖',cat:'inner',name:'ロングボクサーパンツCOOL',label:'【販売インナー】ロングボクサーパンツCOOL'},
+ {n:17,g:'インナー長袖',cat:'inner',name:'インナー長袖(Vネック)',label:'【販売インナー】長袖(Vネック)'},
+ {n:18,g:'インナー長袖',cat:'inner',name:'ロングパンツメンズ',label:'【販売インナー】ロングパンツメンズ'},
+ {n:19,g:'インナー長袖',cat:'inner',name:'インナー長袖(Uネック)',label:'【販売インナー】長袖(Uネック)'},
+ {n:20,g:'インナー長袖',cat:'inner',name:'ロングパンツレディース',label:'【販売インナー】ロングパンツレディース'},
+ {n:21,g:'スリープ',cat:'sleep',name:'プルオーバー長袖',label:'【販売スリープ】プルオーバー長袖'},
+ {n:22,g:'スリープ',cat:'sleep',name:'ジョガーパンツ',label:'【販売スリープ】ジョガーパンツ'},
+ {n:23,g:'スリープ',cat:'sleep',name:'プルオーバー半袖',label:'【販売スリープ】プルオーバー半袖'},
+ {n:24,g:'スリープ',cat:'sleep',name:'ショートパンツ',label:'【販売スリープ】ショートパンツ'},
+ {n:25,g:'スウェット',cat:'sleep',name:'メンズクルーネック長袖',label:'【販売スリープ】(MEN)スウェット クルーネック長袖'},
+ {n:26,g:'スウェット',cat:'sleep',name:'メンズジョガーパンツ',label:'【販売スリープ】(MEN)スウェット ジョガーパンツ'},
+ {n:27,g:'スウェット',cat:'sleep',name:'レディースクルーネック長袖',label:'【販売スリープ】(WOMEN)スウェット クルーネック長袖'},
+ {n:28,g:'スウェット',cat:'sleep',name:'レディースジョガーパンツ',label:'【販売スリープ】(WOMEN)スウェット ジョガーパンツ'},
+ {n:29,g:'パジャマ',cat:'sleep',name:'前開き長袖パジャマ(上)',label:'【販売スリープ】前開き長袖パジャマ（上）'},
+ {n:30,g:'パジャマ',cat:'sleep',name:'前開き長袖パジャマ(下)',label:'【販売スリープ】前開き長袖パジャマ（下）'},
+ {n:31,g:'パジャマ',cat:'sleep',name:'前開き半袖パジャマ(上)',label:'【販売スリープ】前開き半袖パジャマ（上）'},
+ {n:32,g:'パジャマ',cat:'sleep',name:'前開き半袖パジャマ(下)',label:'【販売スリープ】前開き半袖パジャマ（下）'},
+ {n:33,g:'ソックス',cat:'socks',name:'ソックス',label:'【販売】ソックス'},
+ {n:34,g:'指定店舗のみ',cat:'inner',name:'クルーネックTシャツ',label:'【販売Tシャツ】クルーネックTシャツ',storeOnly:true},
+ {n:35,g:'指定店舗のみ',cat:'sleep',name:'テーパードパンツ',label:'【販売パンツ】テーパードパンツ',storeOnly:true},
+ {n:36,g:'指定店舗のみ',cat:'inner',name:'ブラキャミソール',label:'【販売インナー】ブラキャミソール',storeOnly:true},
+];
+const PMAP=Object.fromEntries(PRODUCTS.map(p=>[p.n,p]));
+/* 店舗の初期設定（ハンズ町田）：サイズ・色・取り扱い。設定画面で上書きできる */
+const DEF={};const setD=(ns,o)=>ns.forEach(n=>DEF[n]=o);
+setD([10,11,14,15,17,19],{s:['S','M','L','LL'],c:['ホワイト','ブラック','ベージュ'],on:true});
+setD([12,13,16,18,20],{s:['S','M','L','LL'],c:[],on:true});
+setD([21,22],{s:['S','M','L'],c:['ブラック','ネイビー','グレー','ピンク'],on:true});
+setD([23,24],{s:['S','M','L'],c:['ブラック','ネイビー','グレー','ピンク','ブルー','ベージュ'],on:true});
+setD([25,26,27,28,29,30,31,32],{s:['S','M','L'],c:[],on:false});
+DEF[33]={s:['23-25','25-27'],c:['レッド','ホワイト','ネイビー','グレー','ブラック'],on:true,price:'1980'};
+setD([34,35,36],{s:[],c:[],on:false});
+const sk=(p,sz,co)=>`${p}|${sz}|${co}`;
+const vlabel=(co,sz)=>`${co||''}${co&&sz?' ':''}${sz||''}`;
+const GROUPS=['インナー半袖','インナー長袖','スリープ','スウェット','パジャマ','ソックス','指定店舗のみ'];
+const CATS={inner:'インナー',sleep:'スリープ',socks:'靴下'};
+const AGES=['10','20','30','40','50','60'];
+const CROWD=['少ない','普段通り','多い'];
+const LOST_REASONS=['サイズ・色の欠品','価格','サイズ感・着心地','効果に半信半疑','他社と比較','検討して後日','その他'];
+const REASON_CHIPS=['睡眠の質','疲労回復','肩こり・腰','着心地','デモで実感','部屋着','冷え対策','セットで揃えたい'];
+const COUNTERS=[
+ {k:'voice',label:'声かけ',note:'声をかけた人数（接客に繋がらなくても）'},
+ {k:'serve',label:'接客',note:'会話が3往復以上'},
+ {k:'demo',label:'デモ体験',note:'バイタルチェックの体感デモ'},
+ {k:'sample',label:'サンプル体験',note:'お客様が自分で手に取った'},
+];
+const TABS=['rec','stock','report','stats'];
+const KEY='red-hanbai-v1';
+
+/* ===== ユーティリティ ===== */
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Math.random().toString(36).slice(2,9);
+const pad=n=>String(n).padStart(2,'0');
+const isoOf=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const today=()=>isoOf(new Date());
+const nowHM=()=>{const d=new Date();return `${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const wd=iso=>{const [y,m,d]=iso.split('-').map(Number);return '日月火水木金土'[new Date(y,m-1,d).getDay()]};
+const md=iso=>{const [,m,d]=iso.split('-').map(Number);return `${m}/${d}（${wd(iso)}）`};
+const pct=(a,b)=>b?Math.round(a/b*100)+'%':'—';
+const yen=n=>n.toLocaleString('ja-JP')+'円';
+const ageLabel=a=>a==='60'?'60代以上':a+'代';
+const genderLabel=g=>g==='m'?'男性':'女性';
+const reduced=()=>window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ===== 保存 ===== */
+let storageOK=true;
+function blank(){return {v:1,sample:false,settings:{reporter:'',brand:'ハンズ',store:'ハンズ町田',prod:{}},days:{},stock:{},stockChecked:''}}
+function newDay(){return {crowd:'',c:{voice:0,serve:0,demo:0,sample:0,guide:0,flyer:0},sales:[],lost:[],wrap:'',flyerLeft:'',txt:{},closed:''}}
+function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){storageOK=false;return null}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));storageOK=true}catch(e){storageOK=false}}
+
+let S=load();
+if(!S){S=blank();save()}
+S.settings.prod=S.settings.prod||{};
+const ui={tab:'rec',date:today(),sheet:null,period:'all',confirm:null,flash:null};
+
+/* ===== データ参照 ===== */
+function prodCfg(n){const c=S.settings.prod[n]||{},d=DEF[n]||{s:[],c:[],on:true};return {active:c.active??d.on,price:c.price??(d.price||''),sizes:c.sizes??d.s,colors:c.colors??d.c}}
+const dims=n=>{const c=prodCfg(n);return {sz:c.sizes.length?c.sizes:[''],cl:c.colors.length?c.colors:[''],has:c.sizes.length||c.colors.length}};
+const activeProducts=()=>PRODUCTS.filter(p=>prodCfg(p.n).active);
+function getDay(iso=ui.date){return S.days[iso]||newDay()}
+function editDay(iso=ui.date){if(!S.days[iso])S.days[iso]=newDay();return S.days[iso]}
+const hasActivity=d=>d&&(d.sales.length||d.lost.length||Object.values(d.c).some(v=>v>0));
+const pname=(p,v)=>PMAP[p]?PMAP[p].name+(v?` ${v}`:''):'';
+const who=s=>s.age&&s.gender?ageLabel(s.age)+genderLabel(s.gender):'お客様';
+const catsOf=s=>[...new Set(s.items.map(it=>PMAP[it.p].cat))];
+
+function stats(d){
+ const qty={};let items=0,revenue=0,unpriced=0;const ag={};let repeat=0,gift=0,sw=0,unknown=0;
+ d.sales.forEach(s=>{
+  s.items.forEach(it=>{qty[it.p]=(qty[it.p]||0)+it.q;items+=it.q;const pr=Number(prodCfg(it.p).price);if(pr)revenue+=pr*it.q;else unpriced+=it.q});
+  if(s.age&&s.gender)ag[s.gender+s.age]=(ag[s.gender+s.age]||0)+1;else unknown++;
+  if(s.repeat)repeat++;if(s.gift)gift++;if(s.sw)sw++;
+ });
+ return {qty,items,revenue,unpriced,ag,buyers:d.sales.length,repeat,gift,sw,unknown};
+}
+function stockLists(){
+ const out=[],low=[];let nOut=0,nLow=0;
+ activeProducts().forEach(p=>{const {sz,cl}=dims(p.n),o=[],l=[];
+  cl.forEach(co=>sz.forEach(s=>{const v=S.stock[sk(p.n,s,co)],nm=vlabel(co,s);if(v==='out'){o.push(nm);nOut++}else if(v==='low'){l.push(nm);nLow++}}));
+  const f=a=>p.name+(a.some(Boolean)?`（${a.join('・')}）`:'');if(o.length)out.push(f(o));if(l.length)low.push(f(l))});
+ return {out,low,nOut,nLow};
+}
+function lostSummary(list){
+ if(!list.length)return '';
+ const m={};
+ list.forEach(l=>(l.reasons.length?l.reasons:['その他']).forEach(r=>{(m[r]=m[r]||{c:0,p:[]}).c++;if(l.p)m[r].p.push(pname(l.p,l.v))}));
+ let t=Object.entries(m).sort((a,b)=>b[1].c-a[1].c).map(([r,o])=>`${r} ${o.c}件${o.p.length?`（${[...new Set(o.p)].join('、')}）`:''}`).join('、');
+ const notes=list.map(l=>l.note).filter(Boolean);if(notes.length)t+=`。${notes.join('／')}`;
+ return t;
+}
+const AUTO=[50,54,56,57,58,59,60,61,62,65];
+function autoText(d,n){
+ const line=(s,note)=>who(s)+(note?'：'+note:'');
+ switch(n){
+  case 50:return d.sales.filter(s=>s.repeat).map(s=>line(s,s.repeatNote||s.reason)).join('／');
+  case 54:return d.sales.filter(s=>s.sw).map(s=>line(s,s.swNote||s.reason)).join('／');
+  case 56:return d.sales.filter(s=>s.gift).map(s=>line(s,s.giftNote||s.reason)).join('／');
+  case 57:case 58:case 59:{const c=['inner','sleep','socks'][n-57];return d.sales.filter(s=>s.reason&&catsOf(s).includes(c)).map(s=>line(s,s.reason)).join('／')}
+  case 60:case 61:case 62:{const c=['inner','sleep','socks'][n-60];return lostSummary(d.lost.filter(l=>l.cat===c))}
+  case 65:{const {out,low}=stockLists();const a=[];if(out.length)a.push('欠品：'+out.join('、'));if(low.length)a.push('残りわずか：'+low.join('、'));return a.length?a.join('／'):'特になし'}
+ }
+ return '';
+}
+const txt=(d,n)=>d.txt&&d.txt[n]!==undefined?d.txt[n]:(AUTO.includes(n)?autoText(d,n):'');
+
+/* ===== 日報フォーム（68項目） ===== */
+function formRows(iso){
+ const d=getDay(iso),st=stats(d),s=S.settings,r=[];
+ r.push([1,'報告者名',s.reporter],[2,'報告日',iso.replace(/-/g,'/')],[3,'屋号',s.brand],[4,'入店舗名',s.store],[5,'フロア全体の集客状況',d.crowd]);
+ r.push([6,'声かけ数',d.c.voice],[7,'接客数',d.c.serve],[8,'デモ体験数',d.c.demo],[9,'サンプル体験数',d.c.sample]);
+ PRODUCTS.forEach(p=>r.push([p.n,p.label,st.qty[p.n]||0]));
+ let n=37;AGES.forEach(a=>['m','f'].forEach(g=>r.push([n++,`年代別購入(${a==='60'?'60代以上～':a+'代'})(${genderLabel(g)})`,st.ag[g+a]||0])));
+ r.push([49,'リピート購入人数',st.repeat],[50,'リピート購入 コメント',txt(d,50)],[51,'オンライン・直営店誘導人数',d.c.guide],[52,'オンライン・直営店誘導 コメント',txt(d,52)],
+  [53,'他社から自社への切り返し人数',st.sw],[54,'他社から自社への切り返し コメント',txt(d,54)],[55,'ギフト販売人数',st.gift],[56,'ギフト販売 コメント',txt(d,56)],
+  [57,'インナー購入理由',txt(d,57)],[58,'スリープ購入理由',txt(d,58)],[59,'靴下購入理由',txt(d,59)],
+  [60,'インナー購入に至らなかった理由',txt(d,60)],[61,'スリープ購入に至らなかった理由',txt(d,61)],[62,'靴下購入に至らなかった理由',txt(d,62)],
+  [63,'スタッフの声（要望や伝えたいこと）',txt(d,63)],[64,'店舗からの声',txt(d,64)],[65,'その他報告',txt(d,65)||'特になし'],
+  [66,'ギフトラッピング残数',d.wrap],[67,'1日のチラシ配布数',d.c.flyer],[68,'店舗チラシ残数',d.flyerLeft]);
+ return r;
+}
+function endMissing(d){const m=[];if(!d.crowd)m.push('crowd');if(d.wrap==='')m.push('wrap');if(d.flyerLeft==='')m.push('flyerLeft');return m}
+function warnings(iso){
+ const d=getDay(iso),st=stats(d),w=[];
+ if(!S.settings.reporter)w.push('報告者名が未設定です（設定画面）');
+ if(!d.crowd)w.push('5. フロア全体の集客状況が未選択です');
+ if(d.wrap==='')w.push('66. ギフトラッピング残数が未入力です');
+ if(d.flyerLeft==='')w.push('68. 店舗チラシ残数が未入力です');
+ if(st.unknown)w.push(`年代・性別が未入力の購入が${st.unknown}件あります（37〜48の合計が購入人数と合いません）`);
+ return w;
+}
+function chromeText(iso){
+ const head=['ReD 日報報告（Microsoft Forms）のフォームに、以下の内容を入力してください。',
+ '・行頭の番号はフォームの質問番号です。',
+ '・3〜5は選択肢から同じものを選んでください。2の報告日は yyyy/MM/dd 形式です。',
+ '・数値の項目は半角数字で入力し、0もそのまま入力してください。',
+ '・「（空欄）」の項目は任意項目なので、何も入力しないでください。',
+ '・すべて入力したら送信ボタンは押さずに止め、入力内容を確認させてください。'];
+ return head.join('\n')+'\n\n'+formRows(iso).map(([n,l,v])=>`${n}. ${l}：${v===''||v==null?'（空欄）':v}`).join('\n');
+}
+function reportText(iso){
+ const d=getDay(iso),st=stats(d),s=S.settings,{out,low}=stockLists();
+ const L=[];
+ L.push(`【ReD 日報｜${md(iso)} ${s.store}】`);
+ if(s.reporter)L.push(`報告者：${s.reporter}`);
+ L.push(`フロアの集客状況：${d.crowd||'未入力'}`,'');
+ L.push('■行動',`声かけ ${d.c.voice}／接客 ${d.c.serve}／デモ体験 ${d.c.demo}／サンプル体験 ${d.c.sample}`,`接客率 ${pct(d.c.serve,d.c.voice)}（接客÷声かけ）・購入率 ${pct(st.buyers,d.c.serve)}（購入人数÷接客）`,'');
+ L.push('■販売',`購入 ${st.buyers}名・計${st.items}点`+(st.revenue?`（売上 ${yen(st.revenue)}${st.unpriced?'・単価未設定の商品を除く':''}）`:''));
+ Object.entries(st.qty).sort((a,b)=>b[1]-a[1]).forEach(([p,q])=>L.push(`・${PMAP[p].name} ${q}点`));
+ const ag=[];AGES.forEach(a=>['m','f'].forEach(g=>{const c=st.ag[g+a];if(c)ag.push(`${ageLabel(a)}${genderLabel(g)} ${c}名`)}));
+ if(ag.length)L.push(`購入者：${ag.join('、')}`);
+ L.push(`リピート ${st.repeat}名／ギフト ${st.gift}名／他社からの切り返し ${st.sw}名／オンライン・直営店誘導 ${d.c.guide}名`,'');
+ L.push(`■購入に至らなかった接客 ${d.lost.length}件`);
+ ['inner','sleep','socks'].forEach(c=>{const t=lostSummary(d.lost.filter(l=>l.cat===c));if(t)L.push(`・${CATS[c]}：${t}`)});
+ L.push('');
+ L.push('■在庫',`欠品：${out.length?out.join('、'):'なし'}`,`残りわずか：${low.length?low.join('、'):'なし'}`,'');
+ L.push('■備品',`ギフトラッピング残 ${d.wrap===''?'未入力':d.wrap+'枚'}／チラシ配布 ${d.c.flyer}枚・店舗チラシ残 ${d.flyerLeft===''?'未入力':d.flyerLeft+'枚'}`);
+ const sv=txt(d,63),so=txt(d,64);
+ if(sv||so){L.push('');if(sv)L.push('■スタッフの声',sv);if(so)L.push('■店舗からの声',so)}
+ return L.join('\n');
+}
+
+/* ===== 描画 ===== */
+function render(enter=false){
+ $('#dateInput').value=ui.date;
+ $('#storeName').textContent=S.settings.store||'';
+ const ti=TABS.indexOf(ui.tab);
+ $$('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false'));
+ $('#pill').style.transform=`translateX(${Math.max(ti,0)*100}%)`;$('#pill').style.opacity=ti<0?0:1;
+ $('#setBtn').setAttribute('aria-pressed',ui.tab==='set');
+ const f={rec:renderRec,stock:renderStock,report:renderReport,stats:renderStats,set:renderSettings}[ui.tab];
+ const m=$('#main');m.innerHTML=topBanners()+f();
+ m.classList.toggle('enter',enter&&!reduced());
+ if(enter)[...m.children].forEach((c,i)=>c.style.setProperty('--i',Math.min(i,10)));
+ $$('.bars',m).forEach(b=>[...b.querySelectorAll('.fill')].forEach((f,i)=>f.style.setProperty('--i',i)));
+ $$('.fstep .fill',m).forEach((f,i)=>f.style.setProperty('--i',i));
+ if(enter)$$('[data-count]',m).forEach(countUp);
+ if(ui.flash){const el=$(`[data-id="${ui.flash}"]`,m);if(el)el.classList.add('flash');ui.flash=null}
+}
+function countUp(el){
+ const to=parseFloat(el.dataset.count),suf=el.dataset.suf||'',dec=+(el.dataset.dec||0);
+ if(reduced()||!to){el.textContent=(dec?to.toFixed(dec):to.toLocaleString('ja-JP'))+suf;return}
+ const t0=performance.now(),dur=700;
+ const step=t=>{const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),v=to*e;el.textContent=(dec?v.toFixed(dec):Math.round(v).toLocaleString('ja-JP'))+suf;if(k<1)requestAnimationFrame(step)};
+ requestAnimationFrame(step);
+}
+function topBanners(){
+ let h='';
+ if(S.sample)h+=`<div class="banner alert"><div><b>サンプルデータを表示中です。</b>11/1・11/3の記録は架空の例です。使い始めるときは消してください。</div><div><button class="btn sm primary" data-act="clearSample">サンプルを消して使い始める</button></div></div>`;
+ if(!S.settings.reporter&&ui.tab!=='set')h+=`<div class="banner alert"><div><b>はじめに設定をしてください。</b>報告者名と、この店舗で扱っている商品・サイズ・色を確認します。</div><div><button class="btn sm primary" data-act="tab" data-tab="set">設定を開く</button></div></div>`;
+ if(!storageOK)h+=`<div class="banner alert">この端末に保存できません（プライベートブラウズなど）。画面を閉じると記録が消えます。</div>`;
+ return h;
+}
+
+function recKpis(d){const st=stats(d);return `
+  <div class="kpi"><span>購入</span><b>${st.buyers}名</b><i>${st.items}点</i></div>
+  <div class="kpi"><span>接客率</span><b>${pct(d.c.serve,d.c.voice)}</b><i>接客÷声かけ</i></div>
+  <div class="kpi"><span>購入率</span><b>${pct(st.buyers,d.c.serve)}</b><i>購入÷接客</i></div>
+  <div class="kpi"><span>購入に至らず</span><b>${d.lost.length}件</b><i>うち欠品 ${d.lost.filter(l=>l.reasons.includes('サイズ・色の欠品')).length}件</i></div>`}
+function renderRec(){
+ const d=getDay();
+ const ctr=COUNTERS.map(c=>`<div class="ctr"><button class="tap" data-act="inc" data-k="${c.k}" aria-label="${c.label}を1増やす"><span class="lbl">${c.label}</span><span class="note">${c.note}</span><span class="num" data-num="${c.k}">${d.c[c.k]}</span></button><button class="minus" data-act="dec" data-k="${c.k}" aria-label="${c.label}を1減らす">−1</button></div>`).join('');
+ const log=[...d.sales.map(s=>({...s,kind:'sale'})),...d.lost.map(l=>({...l,kind:'lost'}))].sort((a,b)=>a.t<b.t?1:-1);
+ return `
+ ${d.closed?`<div class="banner closed"><div><b>業務終了済み</b>　${esc(d.closed)}</div><button class="btn sm" data-act="reopen">記録を再開</button></div>`:''}
+ <div class="sec ${d.closed?'locked':''}"><div class="sec-head"><h2>${md(ui.date)}　接客カウンター</h2><span class="muted small">タップで＋1</span></div><div class="ctr-grid">${ctr}</div>
+  <div class="mini-row">
+   <div class="stepper"><span class="lbl">オンライン・直営店誘導</span><div class="ctl"><button data-act="dec" data-k="guide">−</button><b data-num="guide">${d.c.guide}</b><button data-act="inc" data-k="guide">＋</button></div></div>
+   <div class="stepper"><span class="lbl">チラシ配布</span><div class="ctl"><button data-act="dec" data-k="flyer">−</button><b data-num="flyer">${d.c.flyer}</b><button data-act="inc" data-k="flyer">＋1</button><button data-act="inc10" data-k="flyer">＋10</button></div></div>
+  </div></div>
+ <div class="actions ${d.closed?'locked':''}"><button class="btn primary big" data-act="openSale">＋ 販売を記録</button><button class="btn big" data-act="openLost">購入に至らず</button></div>
+ <div class="kpis" id="recKpis">${recKpis(d)}</div>
+ <div class="sec"><div class="sec-head"><h2>この日の記録</h2><span class="muted small">タップで修正</span></div>
+  ${log.length?`<div class="log">${log.map(logItem).join('')}</div>`:`<div class="empty">販売・購入に至らなかった接客を記録すると、ここに時刻順で並びます。</div>`}
+ </div>
+ ${d.closed?'':`<button class="btn ink block" data-act="openEnd">業務を終了する</button>`}`;
+}
+function logItem(x){
+ if(x.kind==='sale'){
+  const t=x.items.map(it=>`${pname(it.p,it.v)}${it.q>1?' ×'+it.q:''}`).join('、');
+  const tags=[`<span class="tag acc">販売</span>`,`<span class="tag">${who(x)}</span>`];
+  if(x.repeat)tags.push('<span class="tag ok">リピート</span>');if(x.gift)tags.push('<span class="tag ok">ギフト</span>');if(x.sw)tags.push('<span class="tag ok">他社から切り返し</span>');
+  if(!(x.age&&x.gender))tags.push('<span class="tag warn">年代・性別なし</span>');
+  return `<button data-act="editSale" data-id="${x.id}"><span class="t">${x.t}</span><span class="body"><span class="ttl">${esc(t)}</span><span class="tags">${tags.join('')}</span>${x.reason?`<span class="small muted">${esc(x.reason)}</span>`:''}</span></button>`;
+ }
+ const tags=[`<span class="tag ink">購入に至らず</span>`,`<span class="tag">${CATS[x.cat]}</span>`,...x.reasons.map(r=>`<span class="tag">${esc(r)}</span>`)];
+ return `<button data-act="editLost" data-id="${x.id}"><span class="t">${x.t}</span><span class="body"><span class="ttl">${x.p?esc(pname(x.p,x.v)):CATS[x.cat]+'（商品指定なし）'}</span><span class="tags">${tags.join('')}</span>${x.note?`<span class="small muted">${esc(x.note)}</span>`:''}</span></button>`;
+}
+
+function stockBanner(){const {out,low,nOut,nLow}=stockLists();return `<div class="banner ${out.length?'alert':low.length?'warn':'info'}" id="stockSum">
+  <div><b>欠品 ${nOut}件・残りわずか ${nLow}件</b>　<span class="muted">最終チェック：${S.stockChecked?md(S.stockChecked):'まだありません'}</span></div>
+  ${out.length?`<div>欠品：${esc(out.join('、'))}</div>`:''}${low.length?`<div>残りわずか：${esc(low.join('、'))}</div>`:''}</div>`}
+function renderStock(){
+ const rows=GROUPS.map(g=>{
+  const ps=activeProducts().filter(p=>p.g===g);if(!ps.length)return '';
+  return `<div class="sec"><h2>${g}</h2>${ps.map(stockCard).join('')}</div>`;
+ }).join('');
+ return `${stockBanner()}
+ <div class="legend small muted">マスをタップするたびに <span class="cell st-ok">○</span>あり → <span class="cell st-low">△</span>少 → <span class="cell st-out">×</span>なし と切り替わります。前回の状態が残っているので、変わったところだけ直してください。</div>
+ ${rows}
+ <button class="btn primary block" data-act="stockDone">チェック完了（${md(today())}）</button>
+ <p class="muted small" style="margin:0">扱っていない商品・色・サイズは、設定画面の「この店舗の取り扱い商品」で外せます。</p>`;
+}
+const SYM={ok:'○',low:'△',out:'×'};
+function stockCard(p){
+ const {sz,cl}=dims(p.n);let o=0,l=0;
+ const body=cl.map(co=>`<tr><th>${esc(co||'在庫')}</th>${sz.map(s=>{const v=S.stock[sk(p.n,s,co)]||'ok';if(v==='out')o++;if(v==='low')l++;
+  return `<td><button class="cell st-${v}" data-act="cell" data-k="${esc(sk(p.n,s,co))}" aria-label="${esc(vlabel(co,s)||p.name)}：${{ok:'あり',low:'少',out:'なし'}[v]}">${SYM[v]}</button></td>`}).join('')}</tr>`).join('');
+ return `<div class="scard" data-card="${p.n}"><div class="scard-head"><b>${esc(p.name)}</b><span class="tags">${o?`<span class="tag acc">なし ${o}</span>`:''}${l?`<span class="tag warn">少 ${l}</span>`:''}${o||l?`<button class="linkbtn" data-act="cardReset" data-n="${p.n}">すべてありに戻す</button>`:'<span class="tag ok">すべてあり</span>'}</span></div>
+  <div class="mxwrap"><table class="mx"><thead><tr><th></th>${sz.map(s=>`<th>${esc(s||'—')}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div></div>`;
+}
+
+function endFields(d,prefix){
+ const miss=ui.missing||[];
+ return `<div class="field ${miss.includes('crowd')?'missing':''}"><label>5. フロア全体の集客状況<span class="badge req">必須</span></label>
+   <div class="seg">${CROWD.map(c=>`<button data-act="crowd" data-v="${c}" aria-pressed="${d.crowd===c}">${c}</button>`).join('')}</div></div>
+  <div class="two">
+   <div class="field ${miss.includes('wrap')?'missing':''}"><label for="${prefix}wrap">66. ギフトラッピング残数<span class="badge req">必須</span></label><input id="${prefix}wrap" type="number" inputmode="numeric" min="0" data-bind="wrap" value="${esc(d.wrap)}" placeholder="枚"></div>
+   <div class="field ${miss.includes('flyerLeft')?'missing':''}"><label for="${prefix}flyerLeft">68. 店舗チラシ残数<span class="badge req">必須</span></label><input id="${prefix}flyerLeft" type="number" inputmode="numeric" min="0" data-bind="flyerLeft" value="${esc(d.flyerLeft)}" placeholder="枚"></div>
+  </div><span class="muted small">チラシ残数が30枚前後になったら、その他報告に書いてください（補填されます）。</span>`;
+}
+function renderReport(){
+ const d=getDay(),w=warnings(ui.date);
+ const ta=(n,label,hint,req)=>{const auto=AUTO.includes(n);const edited=d.txt&&d.txt[n]!==undefined;
+  return `<div class="field"><div class="field-head"><label for="t${n}">${n}. ${label}<span class="badge ${req?'req':'opt'}">${req?'必須':'任意'}</span></label>${auto&&edited?`<button class="linkbtn" data-act="resetTxt" data-n="${n}">自動の文に戻す</button>`:''}</div>${hint?`<span class="hint">${hint}</span>`:''}<textarea id="t${n}" data-bind="txt" data-n="${n}" placeholder="${auto?'該当する記録がないため空欄':'なし'}">${esc(txt(d,n))}</textarea></div>`};
+ return `
+ ${w.length?`<div class="banner warn"><b>送る前に確認</b><ul>${w.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:`<div class="banner info"><b>必須項目はそろっています。</b></div>`}
+ <div class="sec"><h2>退勤時に入力</h2><div class="card" style="display:flex;flex-direction:column;gap:12px">${endFields(d,'r')}</div></div>
+ <div class="sec"><h2>必須の記述欄</h2><div class="card">${ta(65,'その他報告','ラッピングの反響、店舗共有事項、他メーカーの動向、販売0枚だった等。欠品があれば自動で入ります',true)}</div></div>
+ <details class="opt-fields"><summary>任意の記述欄（50〜64）</summary><div class="inner">
+  <span class="muted small">販売記録から自動で下書きされます。書き換えも可能で、空欄のままでも送信できます。</span>
+  ${ta(50,'リピート購入 コメント')}${ta(52,'オンライン・直営店誘導 コメント','誘導に至った理由（在庫切れ、量販店で扱いのないサイズ・カラーなど）')}${ta(54,'他社から自社への切り返し コメント')}${ta(56,'ギフト販売 コメント')}
+  ${ta(57,'インナー購入理由')}${ta(58,'スリープ購入理由')}${ta(59,'靴下購入理由')}
+  ${ta(60,'インナー購入に至らなかった理由')}${ta(61,'スリープ購入に至らなかった理由')}${ta(62,'靴下購入に至らなかった理由')}
+  ${ta(63,'スタッフの声（要望や伝えたいこと）','ReD事務局に伝えたいこと')}${ta(64,'店舗からの声','店舗担当者から要望があった場合')}
+ </div></details>
+ <div class="card out-card"><div class="head"><b>Claude in Chrome に渡す</b><button class="btn sm primary" data-act="copy" data-what="chrome">コピー</button></div>
+  <span class="muted small">日報フォームを開いた状態で、これをClaudeに貼り付けます。68項目を番号付きで並べています。</span>
+  <pre class="out" id="outChrome">${esc(chromeText(ui.date))}</pre></div>`;
+}
+function refreshOutputs(){const a=$('#outChrome');if(a)a.textContent=chromeText(ui.date)}
+
+function periodDays(){
+ let keys=Object.keys(S.days).filter(k=>hasActivity(S.days[k])).sort();
+ if(ui.period==='month'){const m=ui.date.slice(0,7);keys=keys.filter(k=>k.startsWith(m))}
+ if(ui.period==='last8')keys=keys.slice(-8);
+ return keys;
+}
+function renderStats(){
+ const keys=periodDays();
+ const chips=[['all','全期間'],['month',`${Number(ui.date.slice(5,7))}月`],['last8','直近8日']].map(([k,l])=>`<button class="chip" data-act="period" data-v="${k}" aria-pressed="${ui.period===k}">${l}</button>`).join('');
+ if(!keys.length)return `<div class="chips">${chips}</div><div class="empty">この期間の記録はまだありません。</div>`;
+ const T={voice:0,serve:0,demo:0,sample:0,guide:0,buyers:0,items:0,revenue:0,unpriced:0,repeat:0,gift:0,sw:0},qty={},ag={},lost={},hour={},crowd={};
+ const perDay=keys.map(k=>{const d=S.days[k],st=stats(d);
+  ['voice','serve','demo','sample','guide'].forEach(x=>T[x]+=d.c[x]);['buyers','items','revenue','unpriced','repeat','gift','sw'].forEach(x=>T[x]+=st[x]);
+  Object.entries(st.qty).forEach(([p,q])=>qty[p]=(qty[p]||0)+q);Object.entries(st.ag).forEach(([g,c])=>ag[g]=(ag[g]||0)+c);
+  d.lost.forEach(l=>(l.reasons.length?l.reasons:['その他']).forEach(r=>lost[r]=(lost[r]||0)+1));
+  d.sales.forEach(s=>{const h=parseInt(s.t);hour[h]=(hour[h]||0)+1});
+  if(d.crowd){(crowd[d.crowd]=crowd[d.crowd]||{n:0,b:0}).n++;crowd[d.crowd].b+=st.buyers}
+  return {k,d,st};});
+ const n=keys.length;
+ const bars=(entries,max,cls='')=>entries.length?`<div class="bars">${entries.map(([l,v])=>`<div class="bar"><span class="nm" title="${esc(l)}">${esc(l)}</span><span class="track"><span class="fill ${cls}" style="width:${max?v/max*100:0}%"></span></span><span class="v">${v}</span></div>`).join('')}</div>`:'<div class="empty">記録なし</div>';
+ const pq=Object.entries(qty).map(([p,q])=>[PMAP[p].name,q]).sort((a,b)=>b[1]-a[1]);
+ const lq=Object.entries(lost).sort((a,b)=>b[1]-a[1]);
+ const hrs=[];for(let h=10;h<=19;h++)hrs.push([`${h}時台`,hour[h]||0]);
+ const maxAg=Math.max(1,...Object.values(ag));
+ const heat=`<div class="tblwrap"><table class="heat"><thead><tr><th></th>${AGES.map(a=>`<th>${ageLabel(a)}</th>`).join('')}</tr></thead><tbody>${['m','f'].map(g=>`<tr><td>${genderLabel(g)}</td>${AGES.map(a=>{const v=ag[g+a]||0;return `<td class="${v?'h':''}" style="background:color-mix(in srgb, var(--accent) ${Math.round(v/maxAg*40)}%, transparent)">${v}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
+ const fmax=Math.max(1,T.voice);
+ const fstep=(l,v)=>`<div class="fstep"><span>${l}</span><span class="track"><span class="fill" style="width:${v/fmax*100}%"></span></span><span class="v">${v}</span></div>`;
+ const cr=CROWD.filter(c=>crowd[c]);
+ return `
+ <div class="chips">${chips}</div>
+ <div class="kpis">
+  <div class="kpi"><span>勤務日数</span><b data-count="${n}" data-suf="日">${n}日</b><i>${md(keys[0])}〜</i></div>
+  <div class="kpi"><span>購入人数</span><b data-count="${T.buyers}" data-suf="名">${T.buyers}名</b><i>1日平均 ${(T.buyers/n).toFixed(1)}名</i></div>
+  <div class="kpi"><span>販売点数</span><b data-count="${T.items}" data-suf="点">${T.items}点</b><i>1人 ${T.buyers?(T.items/T.buyers).toFixed(1):'—'}点</i></div>
+  <div class="kpi"><span>売上</span>${T.revenue?`<b data-count="${T.revenue}" data-suf="円">${yen(T.revenue)}</b>`:'<b>—</b>'}<i>${T.revenue?(T.unpriced?'単価未設定を除く':'単価×点数'):'設定で単価を入力'}</i></div>
+ </div>
+ <div class="sec"><h2>接客の流れ</h2><div class="card funnel">
+  ${fstep('声かけ',T.voice)}<div class="rate">接客率 <b>${pct(T.serve,T.voice)}</b></div>
+  ${fstep('接客',T.serve)}<div class="rate">購入率 <b>${pct(T.buyers,T.serve)}</b></div>
+  ${fstep('購入',T.buyers)}
+  <div class="small muted">デモ体験 ${T.demo}（接客の${pct(T.demo,T.serve)}）／サンプル体験 ${T.sample}／誘導 ${T.guide}<br>リピート ${T.repeat}名・ギフト ${T.gift}名・他社から切り返し ${T.sw}名</div>
+ </div></div>
+ <div class="sec"><h2>売れた商品</h2><div class="card">${bars(pq,pq[0]?.[1])}</div></div>
+ <div class="sec"><h2>購入者の年代・性別</h2>${heat}</div>
+ <div class="sec"><h2>購入に至らなかった理由</h2><div class="card">${bars(lq,lq[0]?.[1],'ink')}</div></div>
+ <div class="sec"><h2>時間帯別の購入人数</h2><div class="card">${bars(hrs,Math.max(1,...hrs.map(x=>x[1])))}</div></div>
+ ${cr.length?`<div class="sec"><h2>集客状況別の購入人数（1日平均）</h2><div class="card">${bars(cr.map(c=>[`${c}（${crowd[c].n}日）`,+(crowd[c].b/crowd[c].n).toFixed(1)]),Math.max(...cr.map(c=>crowd[c].b/crowd[c].n)))}</div></div>`:''}
+ <div class="sec"><h2>日別</h2><div class="tblwrap"><table><thead><tr><th>日付</th><th>集客</th><th>声かけ</th><th>接客</th><th>購入</th><th>点数</th><th>購入率</th></tr></thead><tbody>
+  ${perDay.slice().reverse().map(({k,d,st})=>`<tr><td><button class="linkbtn" data-act="goDay" data-k="${k}">${md(k)}</button></td><td>${d.crowd||'—'}</td><td>${d.c.voice}</td><td>${d.c.serve}</td><td>${st.buyers}</td><td>${st.items}</td><td>${pct(st.buyers,d.c.serve)}</td></tr>`).join('')}
+ </tbody></table></div></div>`;
+}
+
+function renderSettings(){
+ const s=S.settings;
+ const prow=p=>{const c=prodCfg(p.n);return `<div class="prow"><input type="checkbox" id="pa${p.n}" data-bind="pactive" data-n="${p.n}" ${c.active?'checked':''} aria-label="${esc(p.name)}を表示"><label class="nm" for="pa${p.n}">${esc(p.name)}<small>No.${p.n} ${esc(p.label)}</small></label>
+  <div class="opts"><input type="number" inputmode="numeric" placeholder="単価（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="単価"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
+ return `
+ <div class="sec"><h2>日報の基本情報</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
+  <div class="field"><label for="sRep">1. 報告者名</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：佐藤 輝"></div>
+  <div class="two"><div class="field"><label for="sBrand">3. 屋号</label><input id="sBrand" data-bind="set" data-k="brand" value="${esc(s.brand)}"></div>
+  <div class="field"><label for="sStore">4. 入店舗名</label><input id="sStore" data-bind="set" data-k="store" value="${esc(s.store)}"></div></div>
+  <span class="muted small">屋号・店舗名はフォームの選択肢と同じ表記にしてください。</span>
+ </div></div>
+ <div class="sec"><div class="sec-head"><h2>この店舗の取り扱い商品</h2></div>
+  <span class="muted small">チェックを外した商品は、販売記録と欠品チェックに出なくなります（日報フォームには0で入ります）。サイズと色はカンマ区切りで編集でき、欠品チェックの表に反映されます。扱っていない色はここで消してください。初期設定はハンズ町田（スウェット・パジャマなし）です。</span>
+  ${GROUPS.map(g=>`<div class="grp"><h3>${g}</h3>${PRODUCTS.filter(p=>p.g===g).map(prow).join('')}</div>`).join('')}
+ </div>
+ <div class="sec"><h2>バックアップ</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
+  <span class="small">記録はこの端末のブラウザ内にだけ保存されます。ブラウザのデータを消すと記録も消えるので、ときどきバックアップをコピーしてメモアプリなどに保存してください。</span>
+  <button class="btn sm" data-act="backup">バックアップをコピー</button>
+  <div class="field"><label for="restoreTa">バックアップから戻す</label><textarea id="restoreTa" placeholder="コピーしておいたバックアップを貼り付け"></textarea></div>
+  <button class="btn sm" data-act="restore">貼り付けた内容で上書きする</button>
+ </div></div>
+ <div class="sec"><h2>リセット</h2><button class="btn sm outline-accent" data-act="wipe">${ui.confirm==='wipe'?'もう一度押すと全記録を消去します':'すべての記録を消去'}</button></div>`;
+}
+
+/* ===== シート ===== */
+function openSheet(obj){ui.sheet=obj;ui.missing=null;renderSheet(true)}
+function openSale(id){
+ const d=getDay(),s=id?d.sales.find(x=>x.id===id):null;
+ const data=s?JSON.parse(JSON.stringify(s)):{t:nowHM(),items:[],age:'',gender:'',repeat:false,gift:false,sw:false,reason:'',repeatNote:'',giftNote:'',swNote:''};
+ data.items.forEach(it=>it.out=false);
+ openSheet({type:'sale',id,pick:null,data});
+}
+function openLost(id){
+ const d=getDay(),l=id?d.lost.find(x=>x.id===id):null;
+ openSheet({type:'lost',id,data:l?JSON.parse(JSON.stringify(l)):{t:nowHM(),cat:'',reasons:[],p:'',v:'',note:''}});
+}
+function closeSheet(){
+ const el=$('#sheet');if(el.hidden)return;
+ ui.sheet=null;ui.confirm=null;ui.missing=null;el.classList.remove('show');document.body.style.overflow='';
+ setTimeout(()=>{if(!ui.sheet){el.hidden=true;el.innerHTML=''}},reduced()?0:320);
+}
+function renderSheet(open=false){
+ const el=$('#sheet'),sh=ui.sheet;if(!sh)return closeSheet();
+ const body={sale:saleBody,lost:lostBody,end:endBody,done:doneBody}[sh.type]();
+ if(open||!$('.panel',el)){
+  el.innerHTML=`<div class="panel" role="dialog" aria-modal="true"><div class="grab"></div><div class="pc">${body}</div></div>`;
+  el.hidden=false;document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+ }else{
+  const pb=$('.pb',el),st=pb?pb.scrollTop:0;
+  $('.pc',el).innerHTML=body;const pb2=$('.pb',el);if(pb2)pb2.scrollTop=st;
+ }
+ if(sh.type==='done')$$('[data-count]',el).forEach(countUp);
+}
+function saleBody(){
+ const D=ui.sheet.data,last=ui.sheet.lastAdded;
+ const chip=p=>{const q=D.items.filter(i=>i.p===p.n).reduce((a,b)=>a+b.q,0);return `<button class="pchip" data-act="pickP" data-n="${p.n}" aria-pressed="${q>0||ui.sheet.pick===p.n}">${esc(p.name)}${q?`<span class="q">${q}</span>`:''}</button>`};
+ const groups=GROUPS.map(g=>{const ps=activeProducts().filter(p=>p.g===g);if(!ps.length)return '';
+  let h=`<div class="pgrp"><span class="gl">${g}</span><div class="chips">${ps.map(chip).join('')}</div>`;
+  return h+'</div>'}).join('');
+ const chosen=D.items.length?`<div class="chosen">${D.items.map((it,i)=>`<div class="citem ${last===i?'new':''}"><span class="nm">${esc(pname(it.p,it.v))}</span><span class="qty"><button data-act="qty" data-i="${i}" data-d="-1" aria-label="減らす">−</button><b>${it.q}</b><button data-act="qty" data-i="${i}" data-d="1" aria-label="増やす">＋</button></span><label><input type="checkbox" data-bind="itemOut" data-i="${i}" ${it.out?'checked':''}>この販売で棚から無くなった（欠品にする）</label>${it.out?outPick(it,i):''}</div>`).join('')}</div>`:`<div class="empty">上の商品をタップすると追加されます</div>`;
+ ui.sheet.lastAdded=null;
+ const tog=(k,l)=>`<button class="pchip" style="text-align:center" data-act="flag" data-k="${k}" aria-pressed="${!!D[k]}">${l}</button>`;
+ const note=(k,flag,ph)=>D[flag]?`<input class="subnote" data-bind="sd" data-k="${k}" value="${esc(D[k])}" placeholder="${ph}" id="sd${k}">`:'';
+ return `<div class="ph"><b>${ui.sheet.id?'販売を修正':'販売を記録'}</b><input type="time" data-bind="sd" data-k="t" value="${esc(D.t)}" id="sdt" aria-label="時刻" style="border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px"></div>
+ <div class="pb">
+  <div class="sec"><h2>商品</h2>${groups}</div>
+  <div class="sec"><h2>選んだ商品</h2>${chosen}</div>
+  <div class="sec"><h2>お客様</h2>
+   <div class="seg">${['m','f'].map(g=>`<button data-act="sGender" data-v="${g}" aria-pressed="${D.gender===g}">${genderLabel(g)}</button>`).join('')}</div>
+   <div class="seg">${AGES.map(a=>`<button data-act="sAge" data-v="${a}" aria-pressed="${D.age===a}" style="font-size:13px">${a==='60'?'60〜':a+'代'}</button>`).join('')}</div>
+  </div>
+  <div class="sec"><h2>あてはまるもの</h2><div class="toggles">${tog('repeat','リピート')}${tog('gift','ギフト')}${tog('sw','他社から切り返し')}</div>
+   ${note('repeatNote','repeat','リピートの理由（例：半袖が良かったので長袖も）')}${note('giftNote','gift','誰に・どんな目的で（例：父の健康が気になり父の日に）')}${note('swNote','sw','決め手（例：他社と迷ったが着心地で決定）')}
+  </div>
+  <div class="sec"><h2>購入理由・決め手</h2><div class="chips">${REASON_CHIPS.map(r=>`<button class="chip" data-act="rchip" data-v="${r}">${r}</button>`).join('')}</div>
+   <textarea id="sdreason" class="sheet-input" data-bind="sd" data-k="reason" placeholder="任意。日報の「購入理由」欄に入ります">${esc(D.reason)}</textarea>
+  </div>
+  ${ui.sheet.id?`<button class="btn sm outline-accent" data-act="delEntry">${ui.confirm==='del'?'もう一度押すと削除します':'この記録を削除'}</button>`:''}
+ </div>
+ <div class="pf"><button class="btn" data-act="close">閉じる</button><button class="btn primary" data-act="saveSale" ${D.items.length?'':'disabled'}>保存する</button></div>`;
+}
+function outPick(it,i){
+ const c=prodCfg(it.p);if(!c.sizes.length&&!c.colors.length)return '';
+ return `<div class="outpick"><span class="small muted">無くなったサイズ・色</span>
+  ${c.sizes.length?`<div class="chips">${c.sizes.map(v=>`<button class="chip" data-act="outS" data-i="${i}" data-v="${esc(v)}" aria-pressed="${it.os===v}">${esc(v)}</button>`).join('')}</div>`:''}
+  ${c.colors.length?`<div class="chips">${c.colors.map(v=>`<button class="chip" data-act="outC" data-i="${i}" data-v="${esc(v)}" aria-pressed="${it.oc===v}">${esc(v)}</button>`).join('')}</div>`:''}</div>`;
+}
+function lostBody(){
+ const D=ui.sheet.data;
+ const ps=D.cat?activeProducts().filter(p=>p.cat===D.cat):[];
+ const pc=D.p?prodCfg(D.p):null;
+ return `<div class="ph"><b>${ui.sheet.id?'購入に至らなかった接客を修正':'購入に至らなかった接客'}</b><input type="time" data-bind="sd" data-k="t" value="${esc(D.t)}" id="sdt" aria-label="時刻" style="border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 8px"></div>
+ <div class="pb">
+  <p class="muted small" style="margin:0">接客したが買わなかったお客様を1人1件で記録します。日報の60〜62（購入に至らなかった理由）と分析に使われます。</p>
+  <div class="sec"><h2>検討していた商品の種類</h2><div class="seg">${Object.entries(CATS).map(([k,l])=>`<button data-act="lCat" data-v="${k}" aria-pressed="${D.cat===k}">${l}</button>`).join('')}</div></div>
+  <div class="sec"><h2>買わなかった理由（複数可）</h2><div class="chips">${LOST_REASONS.map(r=>`<button class="chip" data-act="lReason" data-v="${r}" aria-pressed="${D.reasons.includes(r)}">${r}</button>`).join('')}</div></div>
+  ${D.cat?`<div class="sec" style="animation:rise .3s var(--ease)"><h2>商品（任意）</h2><div class="field"><select id="lp" data-bind="lp"><option value="">指定しない</option>${ps.map(p=>`<option value="${p.n}" ${String(D.p)===String(p.n)?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>
+   ${pc&&(pc.sizes.length||pc.colors.length)?`<div class="two">${pc.colors.length?`<div class="field"><select id="lco" data-bind="lvar" data-k="co"><option value="">色を指定しない</option>${pc.colors.map(v=>`<option ${D.co===v?'selected':''}>${esc(v)}</option>`).join('')}</select></div>`:''}${pc.sizes.length?`<div class="field"><select id="lsz" data-bind="lvar" data-k="sz"><option value="">サイズを指定しない</option>${pc.sizes.map(v=>`<option ${D.sz===v?'selected':''}>${esc(v)}</option>`).join('')}</select></div>`:''}</div>`:''}</div>`:''}
+  <div class="sec"><h2>メモ</h2><textarea id="lnote" class="sheet-input" data-bind="sd" data-k="note" placeholder="例：Lサイズ希望、また来ると言っていた">${esc(D.note)}</textarea></div>
+  ${ui.sheet.id?`<button class="btn sm outline-accent" data-act="delEntry">${ui.confirm==='del'?'もう一度押すと削除します':'この記録を削除'}</button>`:''}
+ </div>
+ <div class="pf"><button class="btn" data-act="close">閉じる</button><button class="btn primary" data-act="saveLost" ${D.cat?'':'disabled'}>保存する</button></div>`;
+}
+function endBody(){
+ const d=getDay(),st=stats(d);
+ const other=[];if(!S.settings.reporter)other.push('報告者名が未設定です（設定画面で入力）');if(st.unknown)other.push(`年代・性別が未入力の購入が${st.unknown}件あります`);
+ return `<div class="ph"><b>業務を終了する</b><span class="muted small">${md(ui.date)}</span></div>
+ <div class="pb">
+  <p class="muted small" style="margin:0">退勤前に3つだけ入力してください。終了後はカウンターがロックされ、日報をコピーできる画面になります。</p>
+  ${endFields(d,'e')}
+  ${other.length?`<div class="banner warn"><b>確認</b><ul>${other.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:''}
+ </div>
+ <div class="pf"><button class="btn" data-act="close">戻る</button><button class="btn primary" data-act="finish">終了して日報を作る</button></div>`;
+}
+function doneBody(){
+ const d=getDay(),st=stats(d);
+ return `<div class="pb"><div class="done">
+  <svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="38"/><path d="M26 43 l11 11 l21 -23"/></svg>
+  <h3>お疲れさまでした</h3>
+  <div class="kpis">
+   <div class="kpi"><span>声かけ</span><b data-count="${d.c.voice}">${d.c.voice}</b></div>
+   <div class="kpi"><span>接客</span><b data-count="${d.c.serve}">${d.c.serve}</b></div>
+   <div class="kpi"><span>購入</span><b data-count="${st.buyers}" data-suf="名">${st.buyers}名</b></div>
+   <div class="kpi"><span>販売</span><b data-count="${st.items}" data-suf="点">${st.items}点</b></div>
+  </div>
+  <div class="acts">
+   <button class="btn primary" data-act="copy" data-what="chrome">Claude in Chrome 用をコピー</button>
+   <button class="btn" data-act="toReport">日報画面で確認する</button>
+  </div>
+ </div></div>`;
+}
+
+/* ===== 演出 ===== */
+let toastT;
+function toast(m){const t=$('#toast');t.hidden=true;void t.offsetWidth;t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+function buzz(ms=10){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+function ripple(btn,e){if(reduced())return;const r=btn.getBoundingClientRect(),s=document.createElement('span');s.className='ripple';s.style.left=((e.clientX||r.left+r.width/2)-r.left)+'px';s.style.top=((e.clientY||r.top+r.height/2)-r.top)+'px';btn.appendChild(s);setTimeout(()=>s.remove(),650)}
+function floater(host,text){if(reduced())return;const f=document.createElement('span');f.className='floater';f.textContent=text;host.appendChild(f);setTimeout(()=>f.remove(),800)}
+function bumpCounter(k,text){
+ const d=getDay();
+ $$(`[data-num="${k}"]`).forEach(el=>{el.textContent=d.c[k];el.classList.remove('bump');void el.offsetWidth;el.classList.add('bump')});
+ const host=$(`[data-num="${k}"]`)?.closest('.tap,.stepper');if(host&&text)floater(host,text);
+ const kp=$('#recKpis');if(kp)kp.innerHTML=recKpis(d);
+}
+async function copyText(t){
+ try{await navigator.clipboard.writeText(t);toast('コピーしました')}
+ catch(e){const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();toast(ok?'コピーしました':'コピーできませんでした。テキストを長押しして選択してください')}
+}
+function locked(){if(getDay().closed){toast('業務終了済みです。「記録を再開」で編集できます');return true}return false}
+
+/* ===== 操作 ===== */
+document.addEventListener('click',e=>{
+ const b=e.target.closest('[data-act]');
+ if(!b){if(e.target.id==='sheet')closeSheet();return}
+ const a=b.dataset.act,sh=ui.sheet,D=sh&&sh.data;
+ if(a!=='wipe'&&a!=='delEntry')ui.confirm=null;
+ switch(a){
+  case 'tab':{const next=ui.tab==='set'&&b.dataset.tab==='set'?'rec':b.dataset.tab;ui.tab=next;render(true);window.scrollTo({top:0,behavior:reduced()?'auto':'smooth'});break}
+  case 'crowd':{const d=editDay();d.crowd=d.crowd===b.dataset.v?'':b.dataset.v;save();buzz();if(ui.missing)ui.missing=ui.missing.filter(x=>x!=='crowd');if(sh)renderSheet();else render();break}
+  case 'inc':if(locked())break;editDay().c[b.dataset.k]++;save();buzz();if(b.classList.contains('tap'))ripple(b,e);bumpCounter(b.dataset.k,'+1');break;
+  case 'inc10':if(locked())break;editDay().c[b.dataset.k]+=10;save();buzz();bumpCounter(b.dataset.k,'+10');break;
+  case 'dec':{if(locked())break;const d=editDay();if(d.c[b.dataset.k]===0)break;d.c[b.dataset.k]--;save();bumpCounter(b.dataset.k,'−1');break}
+  case 'openSale':if(locked())break;openSale();break;
+  case 'openLost':if(locked())break;openLost();break;
+  case 'editSale':if(locked())break;openSale(b.dataset.id);break;
+  case 'editLost':if(locked())break;openLost(b.dataset.id);break;
+  case 'openEnd':openSheet({type:'end'});break;
+  case 'finish':{const d=editDay(),m=endMissing(d);if(m.length){ui.missing=m;renderSheet();buzz(40);toast('未入力の必須項目があります');break}
+   d.closed=nowHM();save();buzz(30);ui.sheet={type:'done'};renderSheet();render();break}
+  case 'reopen':{const d=editDay();d.closed='';save();render(true);toast('記録を再開しました');break}
+  case 'toReport':closeSheet();ui.tab='report';render(true);window.scrollTo(0,0);break;
+  case 'close':closeSheet();break;
+  case 'pickP':{const n=+b.dataset.n,i=D.items.findIndex(x=>x.p===n);if(i>=0)D.items[i].q++;else{D.items.push({p:n,v:'',q:1,out:false});sh.lastAdded=D.items.length-1}buzz();renderSheet();break}
+  case 'outS':{const it=D.items[+b.dataset.i];it.os=it.os===b.dataset.v?'':b.dataset.v;renderSheet();break}
+  case 'outC':{const it=D.items[+b.dataset.i];it.oc=it.oc===b.dataset.v?'':b.dataset.v;renderSheet();break}
+  case 'qty':{const it=D.items[+b.dataset.i];it.q+=+b.dataset.d;if(it.q<=0)D.items.splice(+b.dataset.i,1);renderSheet();break}
+  case 'sGender':D.gender=D.gender===b.dataset.v?'':b.dataset.v;renderSheet();break;
+  case 'sAge':D.age=D.age===b.dataset.v?'':b.dataset.v;renderSheet();break;
+  case 'flag':D[b.dataset.k]=!D[b.dataset.k];renderSheet();break;
+  case 'rchip':D.reason=D.reason?D.reason+'、'+b.dataset.v:b.dataset.v;renderSheet();break;
+  case 'saveSale':{const d=editDay(),rec={...D,id:sh.id||uid()};const outs=rec.items.filter(i=>i.out);rec.items=rec.items.map(({out,os,oc,...r})=>r);
+   if(sh.id){d.sales[d.sales.findIndex(x=>x.id===sh.id)]=rec}else d.sales.push(rec);
+   let done=0,skip=0;outs.forEach(i=>{const c=prodCfg(i.p);if((c.sizes.length&&!i.os)||(c.colors.length&&!i.oc)){skip++;return}S.stock[sk(i.p,i.os||'',i.oc||'')]='out';done++});
+   save();buzz(20);closeSheet();ui.flash=rec.id;render();toast(skip?`保存しました。サイズ・色が未選択の${skip}件は欠品に反映していません`:done?'保存し、欠品に反映しました':'販売を保存しました');break}
+  case 'lCat':D.cat=b.dataset.v;D.p='';D.v='';D.co='';D.sz='';renderSheet();break;
+  case 'lReason':{const i=D.reasons.indexOf(b.dataset.v);i>=0?D.reasons.splice(i,1):D.reasons.push(b.dataset.v);renderSheet();break}
+  case 'saveLost':{const d=editDay(),rec={...D,id:sh.id||uid()};if(sh.id){d.lost[d.lost.findIndex(x=>x.id===sh.id)]=rec}else d.lost.push(rec);save();closeSheet();ui.flash=rec.id;render();toast('保存しました');break}
+  case 'delEntry':{if(ui.confirm!=='del'){ui.confirm='del';renderSheet();break}const d=editDay(),k=sh.type==='sale'?'sales':'lost';d[k]=d[k].filter(x=>x.id!==sh.id);save();closeSheet();render();toast('削除しました');break}
+  case 'cell':{const k=b.dataset.k,cur=S.stock[k]||'ok',nx={ok:'low',low:'out',out:'ok'}[cur];if(nx==='ok')delete S.stock[k];else S.stock[k]=nx;save();buzz();
+   const n=+k.split('|')[0],card=b.closest('.scard');card.outerHTML=stockCard(PMAP[n]);const nb=$(`.scard[data-card="${n}"] [data-k="${CSS.escape(k)}"]`);if(nb&&!reduced())nb.classList.add('pop');
+   $('#stockSum').outerHTML=stockBanner();break}
+  case 'cardReset':{const n=b.dataset.n;Object.keys(S.stock).forEach(k=>{if(k.split('|')[0]===n)delete S.stock[k]});save();buzz();$(`.scard[data-card="${n}"]`).outerHTML=stockCard(PMAP[n]);$('#stockSum').outerHTML=stockBanner();break}
+  case 'stockDone':S.stockChecked=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
+  case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
+  case 'copy':copyText(chromeText(ui.date));break;
+  case 'period':ui.period=b.dataset.v;render(true);break;
+  case 'goDay':ui.date=b.dataset.k;ui.tab='rec';render(true);window.scrollTo(0,0);break;
+  case 'backup':copyText(JSON.stringify(S));break;
+  case 'restore':{const v=$('#restoreTa').value.trim();try{const o=JSON.parse(v);if(!o||!o.days||!o.settings)throw 0;S=o;save();render(true);toast('バックアップから戻しました')}catch(_){toast('読み込めませんでした。コピーした内容をそのまま貼り付けてください')}break}
+  case 'wipe':if(ui.confirm!=='wipe'){ui.confirm='wipe';render();break}S=blank();save();ui.confirm=null;ui.date=today();render(true);toast('すべての記録を消去しました');break;
+  case 'clearSample':S=blank();save();ui.date=today();ui.tab='set';render(true);toast('サンプルを消しました。まず報告者名を入力してください');break;
+ }
+});
+document.addEventListener('input',e=>{
+ const el=e.target,bd=el.dataset.bind;if(!bd)return;
+ const D=ui.sheet&&ui.sheet.data;
+ switch(bd){
+  case 'sd':D[el.dataset.k]=el.value;break;
+  case 'txt':{const d=editDay();d.txt=d.txt||{};d.txt[el.dataset.n]=el.value;save();refreshOutputs();break}
+  case 'wrap':case 'flyerLeft':{editDay()[bd]=el.value;save();refreshOutputs();el.closest('.field')?.classList.remove('missing');break}
+  case 'set':S.settings[el.dataset.k]=el.value;save();$('#storeName').textContent=S.settings.store;break;
+  case 'pprice':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).price=el.value;save();break;
+  case 'plist':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{})[el.dataset.f]=el.value.split(/[,、，]/).map(x=>x.trim()).filter(Boolean);save();break;
+ }
+});
+document.addEventListener('change',e=>{
+ const el=e.target,bd=el.dataset.bind;if(!bd)return;
+ const D=ui.sheet&&ui.sheet.data;
+ if(bd==='itemOut'){D.items[+el.dataset.i].out=el.checked;renderSheet()}
+ if(bd==='lp'){D.p=el.value?+el.value:'';D.v='';D.co='';D.sz='';renderSheet()}
+ if(bd==='lvar'){D[el.dataset.k]=el.value;D.v=vlabel(D.co,D.sz)}
+ if(bd==='sd'&&el.tagName==='SELECT'){D[el.dataset.k]=el.value}
+ if(bd==='pactive'){(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).active=el.checked;save()}
+ if((bd==='wrap'||bd==='flyerLeft')&&ui.tab==='report'&&!ui.sheet){const w=$('#main .banner.warn, #main .banner.info');if(w){const tmp=document.createElement('div');tmp.innerHTML=renderReport();w.replaceWith(tmp.firstElementChild)}}
+});
+$('#dateInput').addEventListener('change',e=>{if(e.target.value){ui.date=e.target.value;render(true)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet()});
+
+render(true);
+if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+</script>
+</body>
+</html>
