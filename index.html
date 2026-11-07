@@ -144,7 +144,7 @@ h2{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.08em;margin
 .btn.ink{background:var(--ink);border-color:var(--ink);color:var(--ink-fg)}
 .btn.big{padding:18px 12px;font-size:16px}
 .btn.outline-accent{color:var(--accent);border-color:var(--accent);background:var(--surface)}
-.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.btn:disabled{background:var(--surface-2);color:var(--muted);border-color:var(--line);cursor:not-allowed;box-shadow:none}
 .btn.sm{padding:7px 12px;font-size:13px;font-weight:500}
 .btn.block{width:100%}
 .linkbtn{border:0;background:none;color:var(--accent);font-size:12px;padding:0;text-decoration:underline;text-underline-offset:2px}
@@ -385,6 +385,13 @@ const COUNTERS=[
  {k:'sample',label:'サンプル体験',note:'お客様が自分で手に取った'},
 ];
 const TABS=['rec','stock','report','stats'];
+/* 日報フォームの選択肢（3. 屋号 / 4. 入店舗名）と同じ表記 */
+const BRANDS=['ビックカメラ','ヨドバシカメラ','エディオン','ハンズ','ロフト','ゼビオ','アピタ','ゆめタウン'];
+const STORES=['ビックカメラ有楽町','ビックカメラ池袋本','ビックカメラ新宿西口','ビックカメラ川崎','ビックカメラ柏','ビックカメラ大宮西','ビックカメラ立川','ビックカメラ札幌東急','ビックカメラ名古屋JR ゲートタワー','ビックカメラなんば','ビックカメラ新宿東口旧ビックロ','ビックカメラ千葉駅前','ビックカメラ藤沢','ビックカメラ池袋西口ITtower','ヨドバシカメラAkiba','ヨドバシカメラ横浜','ヨドバシカメラ新宿西口','ヨドバシカメラ京都','エディオンなんば','ハンズ博多','ハンズ新宿','ロフト渋谷','ロフト吉祥寺','ロフト千葉','ロフト銀座','ハンズ北千住','ハンズ横浜','ハンズ町田','ハンズ東京','西宮ロフト','横浜ロフト','ゼビオ札幌月寒','アピタ浜北','ゆめタウン久留米','ゆめタウン高松','池袋ロフト'];
+const storesOf=b=>STORES.filter(x=>x.includes(b));
+const opts=(list,cur,ph)=>`<option value="">${ph}</option>`+list.map(v=>`<option ${v===cur?'selected':''}>${esc(v)}</option>`).join('');
+const dayInfo=(d)=>({reporter:d.reporter||S.settings.reporter,brand:d.brand||S.settings.brand,store:d.store||S.settings.store});
+const started=d=>!!(d.started||d.closed||hasActivity(d));
 const KEY='red-hanbai-v1';
 
 /* ===== ユーティリティ ===== */
@@ -470,7 +477,7 @@ const txt=(d,n)=>d.txt&&d.txt[n]!==undefined?d.txt[n]:(AUTO.includes(n)?autoText
 
 /* ===== 日報フォーム（68項目） ===== */
 function formRows(iso){
- const d=getDay(iso),st=stats(d),s=S.settings,r=[];
+ const d=getDay(iso),st=stats(d),s=dayInfo(d),r=[];
  r.push([1,'報告者名',s.reporter],[2,'報告日',iso.replace(/-/g,'/')],[3,'屋号',s.brand],[4,'入店舗名',s.store],[5,'フロア全体の集客状況',d.crowd]);
  r.push([6,'声かけ数',d.c.voice],[7,'接客数',d.c.serve],[8,'デモ体験数',d.c.demo],[9,'サンプル体験数',d.c.sample]);
  PRODUCTS.forEach(p=>r.push([p.n,p.label,st.qty[p.n]||0]));
@@ -486,7 +493,7 @@ function formRows(iso){
 function endMissing(d){const m=[];if(!d.crowd)m.push('crowd');if(d.wrap==='')m.push('wrap');if(d.flyerLeft==='')m.push('flyerLeft');return m}
 function warnings(iso){
  const d=getDay(iso),st=stats(d),w=[];
- if(!S.settings.reporter)w.push('報告者名が未設定です（設定画面）');
+ if(!dayInfo(d).reporter)w.push('報告者名が未入力です（記録画面の業務開始で入力）');
  if(!d.crowd)w.push('5. フロア全体の集客状況が未選択です');
  if(d.wrap==='')w.push('66. ギフトラッピング残数が未入力です');
  if(d.flyerLeft==='')w.push('68. 店舗チラシ残数が未入力です');
@@ -527,7 +534,7 @@ function reportText(iso){
 /* ===== 描画 ===== */
 function render(enter=false){
  $('#dateInput').value=ui.date;
- $('#storeName').textContent=S.settings.store||'';
+ $('#storeName').textContent=dayInfo(getDay()).store||'';
  const ti=TABS.indexOf(ui.tab);
  $$('nav.tabs button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===ui.tab?'page':'false'));
  $('#pill').style.transform=`translateX(${Math.max(ti,0)*100}%)`;$('#pill').style.opacity=ti<0?0:1;
@@ -551,7 +558,6 @@ function countUp(el){
 function topBanners(){
  let h='';
  if(S.sample)h+=`<div class="banner alert"><div><b>サンプルデータを表示中です。</b>11/1・11/3の記録は架空の例です。使い始めるときは消してください。</div><div><button class="btn sm primary" data-act="clearSample">サンプルを消して使い始める</button></div></div>`;
- if(!S.settings.reporter&&ui.tab!=='set')h+=`<div class="banner alert"><div><b>はじめに設定をしてください。</b>報告者名と、この店舗で扱っている商品・サイズ・色を確認します。</div><div><button class="btn sm primary" data-act="tab" data-tab="set">設定を開く</button></div></div>`;
  if(!storageOK)h+=`<div class="banner alert">この端末に保存できません（プライベートブラウズなど）。画面を閉じると記録が消えます。</div>`;
  return h;
 }
@@ -561,11 +567,26 @@ function recKpis(d){const st=stats(d);return `
   <div class="kpi"><span>接客率</span><b>${pct(d.c.serve,d.c.voice)}</b><i>接客÷声かけ</i></div>
   <div class="kpi"><span>購入率</span><b>${pct(st.buyers,d.c.serve)}</b><i>購入÷接客</i></div>
   <div class="kpi"><span>購入に至らず</span><b>${d.lost.length}件</b><i>うち欠品 ${d.lost.filter(l=>l.reasons.includes('サイズ・色の欠品')).length}件</i></div>`}
+function renderStart(d){
+ const info=dayInfo(d),f=ui.start||(ui.start={...info});
+ const ok=f.reporter&&f.brand&&f.store;
+ return `<div class="sec"><h2>業務開始</h2><div class="card start" style="display:flex;flex-direction:column;gap:12px">
+  <div class="field"><label for="stDate">2. 報告日</label><input id="stDate" type="date" data-bind="stDate" value="${ui.date}"></div>
+  <div class="field"><label for="stRep">1. 報告者名（漢字）</label><input id="stRep" data-bind="st" data-k="reporter" value="${esc(f.reporter)}" placeholder="例：山田 太郎" autocomplete="name"></div>
+  <div class="field"><label for="stBrand">3. 屋号</label><select id="stBrand" data-bind="st" data-k="brand">${opts(BRANDS,f.brand,'選択してください')}</select></div>
+  <div class="field"><label for="stStore">4. 入店舗名</label><select id="stStore" data-bind="st" data-k="store" ${f.brand?'':'disabled'}>${opts(f.brand?storesOf(f.brand):[],f.store,f.brand?'選択してください':'先に屋号を選択')}</select></div>
+  <span class="muted small">前回の内容が入っています。変わらなければそのまま業務開始を押してください。</span>
+ </div></div>
+ <button class="btn primary big block" data-act="startDay" ${ok?'':'disabled'}>業務開始</button>
+ ${S.stockChecked!==ui.date?`<p class="muted small" style="margin:0;text-align:center">開始後、欠品タブで出勤時の欠品チェックをしてください。</p>`:''}`;
+}
 function renderRec(){
  const d=getDay();
+ if(!started(d))return renderStart(d);
  const ctr=COUNTERS.map(c=>`<div class="ctr"><button class="tap" data-act="inc" data-k="${c.k}" aria-label="${c.label}を1増やす"><span class="lbl">${c.label}</span><span class="note">${c.note}</span><span class="num" data-num="${c.k}">${d.c[c.k]}</span></button><button class="minus" data-act="dec" data-k="${c.k}" aria-label="${c.label}を1減らす">−1</button></div>`).join('');
  const log=[...d.sales.map(s=>({...s,kind:'sale'})),...d.lost.map(l=>({...l,kind:'lost'}))].sort((a,b)=>a.t<b.t?1:-1);
  return `
+ ${!d.closed&&S.stockChecked!==ui.date?`<div class="banner warn" style="flex-direction:row;align-items:center;justify-content:space-between"><span>今日の欠品チェックがまだです</span><button class="btn sm" data-act="tab" data-tab="stock">チェックする</button></div>`:''}
  ${d.closed?`<div class="banner closed"><div><b>業務終了済み</b>　${esc(d.closed)}</div><button class="btn sm" data-act="reopen">記録を再開</button></div>`:''}
  <div class="sec ${d.closed?'locked':''}"><div class="sec-head"><h2>${md(ui.date)}　接客カウンター</h2><span class="muted small">タップで＋1</span></div><div class="ctr-grid">${ctr}</div>
   <div class="mini-row">
@@ -701,11 +722,11 @@ function renderSettings(){
  const prow=p=>{const c=prodCfg(p.n);return `<div class="prow"><input type="checkbox" id="pa${p.n}" data-bind="pactive" data-n="${p.n}" ${c.active?'checked':''} aria-label="${esc(p.name)}を表示"><label class="nm" for="pa${p.n}">${esc(p.name)}<small>No.${p.n} ${esc(p.label)}</small></label>
   <div class="opts"><input type="number" inputmode="numeric" placeholder="単価（円）" id="pp${p.n}" data-bind="pprice" data-n="${p.n}" value="${esc(c.price)}" aria-label="単価"><input type="text" placeholder="サイズ（例：S,M,L）" id="psz${p.n}" data-bind="plist" data-f="sizes" data-n="${p.n}" value="${esc(c.sizes.join(','))}" aria-label="サイズ"><input type="text" placeholder="色（なければ空欄）" id="pcl${p.n}" data-bind="plist" data-f="colors" data-n="${p.n}" value="${esc(c.colors.join(','))}" aria-label="色" style="grid-column:1/-1"></div></div>`};
  return `
- <div class="sec"><h2>日報の基本情報</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
-  <div class="field"><label for="sRep">1. 報告者名</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：佐藤 輝"></div>
-  <div class="two"><div class="field"><label for="sBrand">3. 屋号</label><input id="sBrand" data-bind="set" data-k="brand" value="${esc(s.brand)}"></div>
-  <div class="field"><label for="sStore">4. 入店舗名</label><input id="sStore" data-bind="set" data-k="store" value="${esc(s.store)}"></div></div>
-  <span class="muted small">屋号・店舗名はフォームの選択肢と同じ表記にしてください。</span>
+ <div class="sec"><h2>報告者・店舗の初期値</h2><div class="card" style="display:flex;flex-direction:column;gap:10px">
+  <div class="field"><label for="sRep">1. 報告者名（漢字）</label><input id="sRep" data-bind="set" data-k="reporter" value="${esc(s.reporter)}" placeholder="例：山田 太郎"></div>
+  <div class="two"><div class="field"><label for="sBrand">3. 屋号</label><select id="sBrand" data-bind="setBrand">${opts(BRANDS,s.brand,'選択してください')}</select></div>
+  <div class="field"><label for="sStore">4. 入店舗名</label><select id="sStore" data-bind="setStore">${opts(s.brand?storesOf(s.brand):STORES,s.store,'選択してください')}</select></div></div>
+  <span class="muted small">業務開始の画面に入る初期値です。その日の内容は業務開始の画面で変えられます。</span>
  </div></div>
  <div class="sec"><h2>画面の明るさ</h2><div class="seg">${[['light','ライト'],['dark','ダーク'],['auto','端末に合わせる']].map(([k,l])=>`<button data-act="theme" data-v="${k}" aria-pressed="${(s.theme||'light')===k}">${l}</button>`).join('')}</div></div>
  <div class="sec"><div class="sec-head"><h2>この店舗の取り扱い商品</h2></div>
@@ -803,7 +824,7 @@ function lostBody(){
 }
 function endBody(){
  const d=getDay(),st=stats(d);
- const other=[];if(!S.settings.reporter)other.push('報告者名が未設定です（設定画面で入力）');if(st.unknown)other.push(`年代・性別が未入力の購入が${st.unknown}件あります`);
+ const other=[];if(!dayInfo(d).reporter)other.push('報告者名が未入力です');if(st.unknown)other.push(`年代・性別が未入力の購入が${st.unknown}件あります`);
  return `<div class="ph"><b>業務を終了する</b><span class="muted small">${md(ui.date)}</span></div>
  <div class="pb">
   <p class="muted small" style="margin:0">退勤前に3つだけ入力してください。終了後はカウンターがロックされ、日報をコピーできる画面になります。</p>
@@ -893,6 +914,8 @@ document.addEventListener('click',e=>{
   case 'stockDone':S.stockChecked=today();save();buzz(20);render();toast('チェック完了を記録しました');break;
   case 'resetTxt':{const d=editDay();delete d.txt[b.dataset.n];save();render();break}
   case 'copy':copyText(chromeText(ui.date));break;
+  case 'startDay':{const f=ui.start;if(!(f&&f.reporter&&f.brand&&f.store))break;const d=editDay();Object.assign(d,{reporter:f.reporter.trim(),brand:f.brand,store:f.store,started:nowHM()});
+   Object.assign(S.settings,{reporter:d.reporter,brand:d.brand,store:d.store});save();buzz(30);ui.start=null;render(true);toast('業務を開始しました');break}
   case 'theme':S.settings.theme=b.dataset.v;save();applyTheme();render();break;
   case 'period':ui.period=b.dataset.v;render(true);break;
   case 'goDay':ui.date=b.dataset.k;ui.tab='rec';render(true);window.scrollTo(0,0);break;
@@ -909,7 +932,8 @@ document.addEventListener('input',e=>{
   case 'sd':D[el.dataset.k]=el.value;break;
   case 'txt':{const d=editDay();d.txt=d.txt||{};d.txt[el.dataset.n]=el.value;save();refreshOutputs();break}
   case 'wrap':case 'flyerLeft':{editDay()[bd]=el.value;save();refreshOutputs();el.closest('.field')?.classList.remove('missing');break}
-  case 'set':S.settings[el.dataset.k]=el.value;save();$('#storeName').textContent=S.settings.store;break;
+  case 'set':S.settings[el.dataset.k]=el.value;save();break;
+  case 'st':{ui.start[el.dataset.k]=el.value;const btn=$('[data-act=startDay]');if(btn){const f=ui.start;btn.disabled=!(f.reporter&&f.brand&&f.store)}break}
   case 'pprice':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).price=el.value;save();break;
   case 'plist':(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{})[el.dataset.f]=el.value.split(/[,、，]/).map(x=>x.trim()).filter(Boolean);save();break;
  }
@@ -921,10 +945,15 @@ document.addEventListener('change',e=>{
  if(bd==='lp'){D.p=el.value?+el.value:'';D.v='';D.co='';D.sz='';renderSheet()}
  if(bd==='lvar'){D[el.dataset.k]=el.value;D.v=vlabel(D.co,D.sz)}
  if(bd==='sd'&&el.tagName==='SELECT'){D[el.dataset.k]=el.value}
+ if(bd==='st'&&el.dataset.k==='brand'){ui.start.brand=el.value;ui.start.store='';render()}
+ if(bd==='st'&&el.dataset.k==='store'){ui.start.store=el.value;render()}
+ if(bd==='stDate'&&el.value){ui.date=el.value;ui.start=null;render(true)}
+ if(bd==='setBrand'){S.settings.brand=el.value;if(!storesOf(el.value).includes(S.settings.store))S.settings.store='';save();render()}
+ if(bd==='setStore'){S.settings.store=el.value;save()}
  if(bd==='pactive'){(S.settings.prod[el.dataset.n]=S.settings.prod[el.dataset.n]||{}).active=el.checked;save()}
  if((bd==='wrap'||bd==='flyerLeft')&&ui.tab==='report'&&!ui.sheet){const w=$('#main .banner.warn, #main .banner.info');if(w){const tmp=document.createElement('div');tmp.innerHTML=renderReport();w.replaceWith(tmp.firstElementChild)}}
 });
-$('#dateInput').addEventListener('change',e=>{if(e.target.value){ui.date=e.target.value;render(true)}});
+$('#dateInput').addEventListener('change',e=>{if(e.target.value){ui.date=e.target.value;ui.start=null;render(true)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.sheet)closeSheet()});
 
 render(true);
