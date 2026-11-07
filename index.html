@@ -13,8 +13,8 @@
 <script>try{var t=(JSON.parse(localStorage.getItem("red-hanbai-v1")||"{}").settings||{}).theme||"light";if(t!=="auto")document.documentElement.setAttribute("data-theme",t)}catch(e){document.documentElement.setAttribute("data-theme","light")}</script>
 <meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap">
 <style>
 /* 片手操作のスマホ用ツール。上に日付バー、中央に1画面分の作業、下に固定タブ。赤＝操作と注意、墨色＝選択状態。 */
@@ -58,7 +58,7 @@ header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;backgroun
 header.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--accent);transform-origin:left;animation:grow .9s var(--ease) both}
 header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
 .brand{display:flex;align-items:center;gap:8px;white-space:nowrap}
-.mark{display:block;width:68px;height:21px;background:var(--brand);-webkit-mask:url(icons/logo-mask.png) left center/contain no-repeat;mask:url(icons/logo-mask.png) left center/contain no-repeat}
+.mark{display:block;width:68px;height:21px;background:var(--brand);-webkit-mask:url(logo-mask.png) left center/contain no-repeat;mask:url(logo-mask.png) left center/contain no-repeat}
 .brand span:last-child{display:flex;flex-direction:column;line-height:1.25}
 .brand b{font-size:13px}
 .brand small{font-size:11px;color:var(--muted)}
