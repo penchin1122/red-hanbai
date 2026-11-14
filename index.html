@@ -581,16 +581,24 @@ function warnings(iso){
  return w;
 }
 function chromeText(iso,ai=false){
- const head=['ReD 日報報告（Microsoft Forms）のフォームに、以下の内容を入力してください。',
- `・フォームはこちらです：${FORM_URL}`,
- '　ブラウザでこのURLを開いてから入力を始めてください。',
- '・行頭の番号はフォームの質問番号です。',
- '・3〜5は選択肢から同じものを選んでください。2の報告日は yyyy/MM/dd 形式です。',
- '・数値の項目は半角数字で入力し、0もそのまま入力してください。',
- '・「（空欄）」の項目は任意項目なので、何も入力しないでください。',
- '・すべて入力したら送信ボタンは押さずに止め、入力内容を確認させてください。'];
+ /* Muse・Claude in Chromeなど、ブラウザを操作できるAIエージェント共通の依頼文 */
+ const head=['次のMicrosoft Formsの日報フォームに、下の「日報まとめ」の内容を入力してください。','',
+ `フォーム：${FORM_URL}`,'',
+ '入力のルール',
+ '・番号ではなく、質問文を見て対応する欄に入力してください。フォームの番号がずれていることがあります。',
+ '・選択式の質問（屋号、入店舗名、フロア全体の集客状況）は、書かれているものと同じ選択肢を選んでください。',
+ '・報告日は yyyy/MM/dd の形で入力してください。',
+ '・数字の欄は半角数字で入力してください。0も省略せず入力してください。',
+ '・「（空欄）」の欄は何も入力しないでください。',
+ '・日報まとめにない質問がフォームにあった場合は、入力せずに飛ばし、最後にその質問を教えてください。',
+ '・すべて入力し終わっても、送信ボタンは押さないでください。','',
+ '入力が終わったら',
+ '・入力した内容を一覧で見せてください。',
+ '・選択肢が見つからなかった欄、入力できなかった欄があれば、それも教えてください。',
+ '・私が「送信して」と言うまで、送信しないでください。','',
+ `日報まとめ（${md(iso)}）：`];
  const body=formRows(iso).map(([n,l,v])=>`${n}. ${l}：${v===''||v==null?'（空欄）':v}`).join('\n');
- return ai?head.join('\n')+'\n\n'+body:`【日報まとめ】${md(iso)}\n\n`+body;
+ return ai?head.join('\n')+'\n'+body:`【日報まとめ】${md(iso)}\n\n`+body;
 }
 function reportText(iso){
  const d=getDay(iso),st=stats(d),s=S.settings,{out,low}=stockLists();
@@ -763,7 +771,7 @@ function renderReport(){
  <div class="card out-card"><div class="head"><b>日報まとめ</b><button class="btn sm primary" data-act="copy" data-what="plain">コピー</button></div>
   <span class="muted small">日報フォームの質問番号順に、入力する内容を並べています。フォームを見ながらこの通りに入力してください。</span>
   <pre class="out" id="outChrome">${esc(chromeText(ui.date))}</pre>
-  <button class="linkbtn" data-act="copy" data-what="ai" style="align-self:flex-start">AI（Claude in Chromeなど）に入力を頼む用にコピー</button></div>`;
+  <button class="linkbtn" data-act="copy" data-what="ai" style="align-self:flex-start">AI（MuseやClaude in Chrome）に入力を頼む用にコピー</button></div>`;
 }
 let outT;function refreshOutputs(){clearTimeout(outT);outT=setTimeout(()=>{const a=$('#outChrome');if(a)a.textContent=chromeText(ui.date)},500)}
 
